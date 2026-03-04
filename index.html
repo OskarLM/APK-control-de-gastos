@@ -37,6 +37,13 @@
     input, select, textarea { width: 100%; padding: 14px; margin: 8px 0; font-size: 15px; border-radius: 12px; border: 1px solid #334155; background: rgba(15, 23, 42, 0.9); color: white; box-sizing: border-box; }
     .hidden { display: none; }
 </style>
+    <link rel="manifest" href="manifest.json">
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+</script>
+
 </head>
 <body>
 
@@ -264,3 +271,4 @@ initFiltros(); mostrar();
 </script>
 </body>
 </html>
+
