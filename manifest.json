@@ -1,16 +1,18 @@
 {
   "name": "Gastos O&J Master Gold",
   "short_name": "Gastos O&J",
-  "start_url": "index.html",
+  "description": "Control de gastos premium O&J",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0b0f1a",
   "theme_color": "#d4af37",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230b0f1a'/><circle cx='50' cy='50' r='40' fill='none' stroke='%23d4af37' stroke-width='4'/><text x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-weight='bold' font-size='35' fill='%23d4af37'>O%26J</text></svg>",
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJz48cmVjdCB3aWR0aD0nMTAwJyBoZWlnaHQ9JzEwMCcgcng9JzIwJyBmaWxsPSclMjMwYjBmMWEnLz48Y2lyY2xlIGN4PSc1MCcgY3k9JzUwJyByPSc0MCcgZmlsbD0nbm9uZScgc3Ryb2tlPSclMjNkNGFmMzcnIHN0cm9rZS13aWR0aD0nNCcvPjx0ZXh0IHg9JzUwJScgeT0nNTUlJyBkb21pbmFudC1iYXNlbGluZT0nbWlkZGxlJyB0ZXh0LWFuY2hvcj0nbWlkZGxlJyBmb250LWZhbWlseT0nc2VyaWYnIGZvbnQtd2VpZ2h0PSdib2xkJyBmb250LXNpemU9JzM1JyBmaWxsPSclMjNkNGFmMzcnPk8lMjZKPC90ZXh0Pjwvc3ZnPg==",
       "sizes": "512x512",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
