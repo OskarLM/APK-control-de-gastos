@@ -126,6 +126,19 @@
 </div>
 
 <script>
+    document
+.getElementById("importFile")
+.addEventListener("change", async e => {
+
+const file = e.target.files[0];
+
+if(!file) return;
+
+const total = await ultraImport(file);
+
+alert("Importados " + total + " registros");
+
+});
 let movimientos = JSON.parse(localStorage.getItem('movimientos')) || [];
 let categoriaExtra = JSON.parse(localStorage.getItem('categoriaExtra')) || [];
 let subcategoriaExtra = JSON.parse(localStorage.getItem('subcategoriaExtra')) || [];
@@ -330,5 +343,6 @@ mostrar();
 <script src="ultra-importer.js"></script>
 </body>
 </html>
+
 
 
