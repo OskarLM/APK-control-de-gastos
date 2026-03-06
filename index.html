@@ -29,6 +29,8 @@
         .btn-small { padding: 10px; flex: 1; font-size: 10px; background: #222; color: var(--primary); border-radius: 8px; border: 1px solid var(--primary); font-weight: bold; }
         input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; font-size: 13px; border-radius: 12px; border: 1px solid #334155; background: rgba(15, 23, 42, 0.9); color: white; box-sizing: border-box; outline: none; }
         .hidden { display: none; }
+        .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 5000; backdrop-filter: blur(5px); }
+        .popup-content { background: #1e293b; padding: 25px; border-radius: 24px; text-align: center; width: 85%; max-width: 320px; border: 2px solid var(--primary); }
     </style>
 </head>
 <body>
@@ -149,35 +151,64 @@ function mostrar(){
 }
 
 function importarCSV(e) {
-    const file = e.target.files; if (!file) return;
+    const file = e.target.files[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = (evt) => {
-        const lineas = evt.target.result.split(/\r?\n/).filter(l => l.trim() !== "");
-        if (lineas.length < 2) return alert("Archivo sin datos");
-        const norm = (t) => t ? t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
-        const cab = lineas[0].split(";").map(h => norm(h));
-        const iF = cab.indexOf("fecha"), iO = cab.indexOf("origen"), iC = cab.indexOf("categoria"), iS = cab.indexOf("subcategoria"), iI = cab.indexOf("importe"), iD = cab.indexOf("descripcion");
-        if (iF === -1 || iI === -1) return alert("Faltan columnas básicas");
-        let nuevos = [];
-        for (let i = 1; i < lineas.length; i++) {
-            let col = lineas[i].split(";");
-            if (col[iF]) {
-                let fP = col[iF].trim().split("/");
-                if (fP.length === 3) {
-                    let d = fP[0].padStart(2,'0'), m = fP[1].padStart(2,'0'), a = fP[2].trim();
-                    if(a.length === 2) a = "20" + a;
-                    let fISO = `${a}-${m}-${d}`;
-                    let txtImp = col[iI].replace(/[^\d,.-]/g, '').replace(',', '.').trim();
-                    let imp = parseFloat(txtImp);
-                    if (!isNaN(imp)) {
-                        let oriRaw = norm(col[iO]);
-                        let oriFin = oriRaw === "nomina" ? "Nómina" : (oriRaw === "ingreso" ? "Ingreso" : "Gasto");
-                        nuevos.push({ id: "csv_" + Date.now() + "_" + i, f: fISO, o: oriFin, c: col[iC] ? col[iC].trim() : "Varios", s: col[iS] ? col[iS].trim() : "Varios", imp: imp, d: iD !== -1 && col[iD] ? col[iD].replace(/"/g,'').trim() : "" });
+        try {
+            const lineas = evt.target.result.split(/\r?\n/).filter(l => l.trim().includes(";"));
+            if (lineas.length < 2) return alert("Error: El archivo no parece tener el formato correcto (delimitado por ;) o está vacío.");
+
+            const norm = (t) => t ? t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
+            
+            // Leemos la primera línea para encontrar las columnas
+            const cabeceraRaw = lineas[0].split(";");
+            const cab = cabeceraRaw.map(h => norm(h));
+
+            const iF = cab.indexOf("fecha"), iO = cab.indexOf("origen"), iC = cab.indexOf("categoria"), 
+                  iS = cab.indexOf("subcategoria"), iI = cab.indexOf("importe"), iD = cab.indexOf("descripcion");
+
+            if (iF === -1 || iI === -1) return alert("Error: No se encuentran las columnas 'Fecha' o 'Importe'. Revisa los encabezados del Excel.");
+
+            let nuevos = [];
+            for (let i = 1; i < lineas.length; i++) {
+                let col = lineas[i].split(";");
+                if (col.length >= 2 && col[iF]) {
+                    // Procesar Fecha DD/MM/AAAA o DD/MM/AA
+                    let fP = col[iF].trim().split("/");
+                    if (fP.length === 3) {
+                        let d = fP[0].padStart(2,'0'), m = fP[1].padStart(2,'0'), a = fP[2].trim();
+                        if(a.length === 2) a = "20" + a;
+                        let fISO = `${a}-${m}-${d}`;
+                        
+                        // Procesar Importe (limpieza total)
+                        let txtImp = col[iI].replace(/[^\d,.-]/g, '').replace(',', '.').trim();
+                        let imp = parseFloat(txtImp);
+
+                        if (!isNaN(imp)) {
+                            let oriRaw = iO !== -1 ? norm(col[iO]) : "gasto";
+                            let oriFin = oriRaw.includes("nomina") ? "Nómina" : (oriRaw.includes("ingreso") ? "Ingreso" : "Gasto");
+
+                            nuevos.push({ 
+                                id: "csv_" + Date.now() + "_" + i + "_" + Math.floor(Math.random()*1000), 
+                                f: fISO, o: oriFin, 
+                                c: iC !== -1 && col[iC] ? col[iC].trim() : "Varios", 
+                                s: iS !== -1 && col[iS] ? col[iS].trim() : "Varios", 
+                                imp: imp, 
+                                d: iD !== -1 && col[iD] ? col[iD].replace(/"/g,'').trim() : "" 
+                            });
+                        }
                     }
                 }
             }
+            if (nuevos.length === 0) alert("No se han encontrado registros válidos. Verifica que las fechas tengan formato DD/MM/AAAA.");
+            else if(confirm(`¿Importar ${nuevos.length} registros detectados?`)) { 
+                movimientos = [...movimientos, ...nuevos]; 
+                localStorage.setItem('movimientos', JSON.stringify(movimientos)); 
+                location.reload(); 
+            }
+        } catch (err) {
+            alert("Error crítico al procesar el archivo: " + err.message);
         }
-        if(nuevos.length > 0 && confirm(`Importar ${nuevos.length} registros?`)) { movimientos = [...movimientos, ...nuevos]; localStorage.setItem('movimientos', JSON.stringify(movimientos)); location.reload(); }
     };
     reader.readAsText(file, "UTF-8");
 }
