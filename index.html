@@ -233,13 +233,13 @@ function exportarCSV() {
     const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })); link.download = `Gastos_O&J_${new Date().toLocaleDateString()}.csv`; link.click();
 }
 
-// --- IMPORTACIÓN INTELIGENTE Y FLEXIBLE ---
+// --- IMPORTACIÓN CORREGIDA ---
 function importarCSV(e) {
-    const file = e.target.files; if (!file) return;
+    const file = e.target.files[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = (evt) => {
-        const lineas = evt.target.result.split(/\r?\n/);
-        if (lineas.length < 2) return;
+        const lineas = evt.target.result.split(/\r?\n/).filter(l => l.trim() !== "");
+        if (lineas.length < 2) return alert("Archivo sin datos");
 
         const normalizar = (t) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
         const encabezados = lineas[0].split(";").map(h => normalizar(h));
@@ -248,22 +248,27 @@ function importarCSV(e) {
               iC = encabezados.indexOf("categoria"), iS = encabezados.indexOf("subcategoria"), 
               iI = encabezados.indexOf("importe"), iD = encabezados.indexOf("descripcion");
 
-        if (iF === -1 || iO === -1 || iI === -1) return alert("Columnas obligatorias no encontradas");
+        if (iF === -1 || iI === -1) return alert("Error: No se encuentran las columnas 'Fecha' o 'Importe'");
 
         let nuevos = [];
         for (let i = 1; i < lineas.length; i++) {
             let col = lineas[i].split(";");
-            if (col.length >= 5 && col[iF]) {
+            if (col.length >= 2 && col[iF]) {
                 let fP = col[iF].trim().split("/");
                 if (fP.length === 3) {
-                    let fISO = `${fP[2]}-${fP[1].padStart(2,'0')}-${fP[0].padStart(2,'0')}`;
-                    let imp = parseFloat(col[iI].replace(/\s/g, '').replace(',', '.'));
+                    let d = fP[0].padStart(2,'0'), m = fP[1].padStart(2,'0'), a = fP[2].trim();
+                    if(a.length === 2) a = "20" + a;
+                    let fISO = `${a}-${m}-${d}`;
+                    
+                    let txtImp = col[iI].replace(/[^\d,.-]/g, '').replace(',', '.').trim();
+                    let imp = parseFloat(txtImp);
+
                     if (!isNaN(imp)) {
                         nuevos.push({
-                            id: Date.now() + i, f: fISO,
-                            o: col[iO] ? col[iO].trim() : "Gasto",
-                            c: col[iC] ? col[iC].trim() : "Varios",
-                            s: col[iS] ? col[iS].trim() : "Varios",
+                            id: Date.now() + i + Math.random(), f: fISO,
+                            o: iO !== -1 && col[iO] ? col[iO].trim() : "Gasto",
+                            c: iC !== -1 && col[iC] ? col[iC].trim() : "Varios",
+                            s: iS !== -1 && col[iS] ? col[iS].trim() : "Varios",
                             imp: imp,
                             d: iD !== -1 && col[iD] ? col[iD].replace(/"/g,'').trim() : ""
                         });
@@ -271,7 +276,8 @@ function importarCSV(e) {
                 }
             }
         }
-        if(confirm(`Se han detectado ${nuevos.length} registros. ¿Importar ahora?`)) {
+        if (nuevos.length === 0) alert("No se ha podido procesar ningún registro válido.");
+        else if(confirm(`Detectados ${nuevos.length} registros. ¿Importar?`)) {
             movimientos = [...movimientos, ...nuevos];
             localStorage.setItem('movimientos', JSON.stringify(movimientos));
             location.reload();
