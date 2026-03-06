@@ -71,6 +71,7 @@
         <button onclick="volver()" style="background:transparent; color:#94a3b8; width:100%; margin-top:15px; border:none; font-size: 16px;">CANCELAR</button>
     </div>
 </div>
+
 <script>
 const subBase = ["Accesorios","Agua","Aita","Ajuar / Electrodomésticos","Alojamiento","Apuestas y juegos","Atracciones","Ayuntamiento","Barco","Cajero","Casa","Comida","Comisiones","Comunidad","Copas","Efectivo","Electrónica","Extraescolar","Farmacia","Filamento","Garaje","Gas","Gasolina","Herramientas","Ikastola","Impresora","Impuestos","Juguetes / Regalos","Libros / Material escolar","Luz","Mantenimiento","Medicamentos","Parking","Peaje","Préstamo","Reforma","Ropa","Septiembre","Seguro","Suscripción","Suscripciones","Teléfono","Tren","Varios"];
 const catBase = ["Casa","Caravana","Coche","Compras","Efectivo","Escolar","Garaje","Restaurante","Vacaciones"];
@@ -157,74 +158,49 @@ function importarCSV(e) {
         try {
             const lineas = evt.target.result.split(/\r?\n/).filter(l => l.trim().includes(";"));
             if (lineas.length < 2) return alert("Error: El archivo no parece tener el formato correcto (delimitado por ;) o está vacío.");
-
             const norm = (t) => t ? t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
-            
-            // Leemos la primera línea para encontrar las columnas
-            const cabeceraRaw = lineas[0].split(";");
-            const cab = cabeceraRaw.map(h => norm(h));
-
-            const iF = cab.indexOf("fecha"), iO = cab.indexOf("origen"), iC = cab.indexOf("categoria"), 
-                  iS = cab.indexOf("subcategoria"), iI = cab.indexOf("importe"), iD = cab.indexOf("descripcion");
-
-            if (iF === -1 || iI === -1) return alert("Error: No se encuentran las columnas 'Fecha' o 'Importe'. Revisa los encabezados del Excel.");
-
+            const cab = lineas[0].split(";").map(h => norm(h));
+            const iF = cab.indexOf("fecha"), iO = cab.indexOf("origen"), iC = cab.indexOf("categoria"), iS = cab.indexOf("subcategoria"), iI = cab.indexOf("importe"), iD = cab.indexOf("descripcion");
+            if (iF === -1 || iI === -1) return alert("Error: Columnas críticas no encontradas.");
             let nuevos = [];
             for (let i = 1; i < lineas.length; i++) {
                 let col = lineas[i].split(";");
                 if (col.length >= 2 && col[iF]) {
-                    // Procesar Fecha DD/MM/AAAA o DD/MM/AA
                     let fP = col[iF].trim().split("/");
                     if (fP.length === 3) {
                         let d = fP[0].padStart(2,'0'), m = fP[1].padStart(2,'0'), a = fP[2].trim();
                         if(a.length === 2) a = "20" + a;
                         let fISO = `${a}-${m}-${d}`;
-                        
-                        // Procesar Importe (limpieza total)
-                        let txtImp = col[iI].replace(/[^\d,.-]/g, '').replace(',', '.').trim();
-                        let imp = parseFloat(txtImp);
-
+                        let imp = parseFloat(col[iI].replace(/[^\d,.-]/g, '').replace(',', '.'));
                         if (!isNaN(imp)) {
                             let oriRaw = iO !== -1 ? norm(col[iO]) : "gasto";
                             let oriFin = oriRaw.includes("nomina") ? "Nómina" : (oriRaw.includes("ingreso") ? "Ingreso" : "Gasto");
-
-                            nuevos.push({ 
-                                id: "csv_" + Date.now() + "_" + i + "_" + Math.floor(Math.random()*1000), 
-                                f: fISO, o: oriFin, 
-                                c: iC !== -1 && col[iC] ? col[iC].trim() : "Varios", 
-                                s: iS !== -1 && col[iS] ? col[iS].trim() : "Varios", 
-                                imp: imp, 
-                                d: iD !== -1 && col[iD] ? col[iD].replace(/"/g,'').trim() : "" 
-                            });
+                            nuevos.push({ id: "csv_" + Date.now() + "_" + i, f: fISO, o: oriFin, c: iC !== -1 && col[iC] ? col[iC].trim() : "Varios", s: iS !== -1 && col[iS] ? col[iS].trim() : "Varios", imp, d: iD !== -1 && col[iD] ? col[iD].replace(/"/g,'').trim() : "" });
                         }
                     }
                 }
             }
-            if (nuevos.length === 0) alert("No se han encontrado registros válidos. Verifica que las fechas tengan formato DD/MM/AAAA.");
-            else if(confirm(`¿Importar ${nuevos.length} registros detectados?`)) { 
-                movimientos = [...movimientos, ...nuevos]; 
-                localStorage.setItem('movimientos', JSON.stringify(movimientos)); 
-                location.reload(); 
-            }
-        } catch (err) {
-            alert("Error crítico al procesar el archivo: " + err.message);
-        }
+            if (confirm(`¿Importar ${nuevos.length} registros?`)) { movimientos = [...movimientos, ...nuevos]; localStorage.setItem('movimientos', JSON.stringify(movimientos)); location.reload(); }
+        } catch (err) { alert("Error: " + err.message); }
     };
     reader.readAsText(file, "UTF-8");
 }
 
 function volver(){ document.getElementById("form").classList.add("hidden"); document.getElementById("movimientos").classList.remove("hidden"); actualizarFiltrosListas(); mostrar(); }
+
 function initFiltros() {
     const fM = document.getElementById("filtroMes"), fA = document.getElementById("filtroAño"), hoy = new Date();
     fM.innerHTML = '<option value="TODOS">Mes: TODOS</option>'; mesesLabel.forEach((m, i) => fM.add(new Option(m, i))); fM.value = hoy.getMonth();
     fA.innerHTML = '<option value="TODOS">Año: TODOS</option>'; for(let a=2024; a<=2030; a++) fA.add(new Option(a, a)); fA.value = hoy.getFullYear();
     actualizarFiltrosListas();
 }
+
 function actualizarFiltrosListas() {
     const fC = document.getElementById("filtroCat"), fS = document.getElementById("filtroSub");
     fC.innerHTML = '<option value="TODAS">Cat: TODAS</option>'; [...new Set([...catBase, ...catExtra])].sort().forEach(c => { if (c !== "Oskar" && c !== "Josune") fC.add(new Option(c, c)); });
     fS.innerHTML = '<option value="TODAS">Sub: TODAS</option>'; [...new Set(subMaestra)].sort().forEach(s => { if (!mesesLabel.includes(s)) fS.add(new Option(s, s)); });
 }
+
 function borrarElemento(id) {
     let v = document.getElementById(id).value; if(!v || v === "+") return;
     if(confirm(`¿Eliminar "${v}"?`)) {
@@ -232,17 +208,21 @@ function borrarElemento(id) {
         localStorage.setItem(id === 'categoria' ? 'categoriaExtra' : 'subMaestra_v2', JSON.stringify(id === 'categoria' ? catExtra : subMaestra)); location.reload();
     }
 }
+
 function exportarCSV() {
     let csv = "\uFEFFFecha;Origen;Categoria;Subcategoria;Importe;Descripcion\n";
     movimientos.forEach(m => csv += `${m.f.split("-").reverse().join("/")};${m.o};${m.c};${m.s};${m.imp.toString().replace('.',',')};"${m.d || ''}"\n`);
     const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })); link.download = `Gastos_O&J_${new Date().toLocaleDateString()}.csv`; link.click();
 }
+
 function manejarNuevoValor(el, tipo) { if (el.value === "+") { crearPopupNuevo(tipo); el.selectedIndex = 0; } }
+
 function crearPopupNuevo(tipo) {
     let p = document.createElement("div"); p.className = "popup-overlay"; p.id = "popupNuevo";
     p.innerHTML = `<div class="popup-content"><h3>Nueva ${tipo}</h3><input type="text" id="nuevoNombre" placeholder="Nombre..." autofocus><button onclick="confirmarNuevoElemento('${tipo}')" style="width:100%;padding:15px;background:var(--gold-gradient);border:none;border-radius:12px;font-weight:bold;margin-bottom:10px">AÑADIR</button><button onclick="document.getElementById('popupNuevo').remove()" style="background:transparent;color:#94a3b8;border:1px solid #334155;width:100%;padding:10px;border-radius:12px">CANCELAR</button></div>`;
     document.body.appendChild(p);
 }
+
 function confirmarNuevoElemento(tipo) {
     let n = document.getElementById("nuevoNombre").value.trim();
     if (n) {
@@ -252,6 +232,24 @@ function confirmarNuevoElemento(tipo) {
         actualizarFiltrosListas(); document.getElementById("popupNuevo").remove();
     }
 }
+
+// --- RESTAURADO: POPUP DE NÓMINA ---
+function crearPopupNomina() {
+    let p = document.createElement("div"); p.className = "popup-overlay"; p.id = "popupNomina";
+    p.innerHTML = `<div class="popup-content">
+        <h3 style="color:var(--primary)">¿Quién cobra?</h3>
+        <button onclick="asignarNomina('Oskar')" style="width:100%;padding:15px;background:var(--gold-gradient);border:none;border-radius:12px;font-weight:bold;margin-bottom:10px;color:#000">OSKAR</button>
+        <button onclick="asignarNomina('Josune')" style="width:100%;padding:15px;background:var(--gold-gradient);border:none;border-radius:12px;font-weight:bold;margin-bottom:10px;color:#000">JOSUNE</button>
+        <button onclick="document.getElementById('popupNomina').remove()" style="background:transparent;color:#94a3b8;border:1px solid #334155;width:100%;padding:10px;border-radius:12px">CANCELAR</button>
+    </div>`;
+    document.body.appendChild(p);
+}
+
+function asignarNomina(nombre) {
+    document.getElementById("categoria").innerHTML = `<option value="${nombre}" selected>${nombre}</option>`;
+    document.getElementById("popupNomina").remove();
+}
+
 document.getElementById("origen").onchange = function() {
     if(this.value === "Nómina") {
         let f = document.getElementById("fecha").value, m = new Date(f + "T00:00:00").getMonth();
@@ -261,6 +259,7 @@ document.getElementById("origen").onchange = function() {
 };
 document.getElementById("categoria").onchange = function() { manejarNuevoValor(this, "categoria"); };
 document.getElementById("subcategoria").onchange = function() { manejarNuevoValor(this, "subcategoria"); };
+
 initFiltros(); mostrar();
 </script>
 </body>
