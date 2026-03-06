@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#d4af37">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>MIS GASTOS V3.18 - MASTER GOLD</title>
+
+<!-- Configuración para App Móvil (PWA) -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gastos O&J">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230b0f1a'/><circle cx='50' cy='50' r='40' fill='none' stroke='%23d4af37' stroke-width='4'/><text x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-weight='bold' font-size='35' fill='%23d4af37'>O%26J</text></svg>">
+
+<style>
+    :root {
+        --primary: #d4af37; --success: #22c55e; --danger: #ef4444; --warning: #f97316;
+        --electric-blue: #00f2ff; --bg: #0b0f1a; --card-bg: rgba(30, 41, 59, 0.7);
+        --text: #f8fafc; --gold-gradient: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+    }
+
+    body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+    .background-icon { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 30vw; font-weight: 900; background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; opacity: 0.1; z-index: -1; pointer-events: none; }
+    .topbar { background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(10px); padding: 20px; font-size: 15px; font-weight: 700; text-align: center; border-bottom: 1px solid var(--primary); color: var(--primary); position: sticky; top: 0; z-index: 1000; }
+    .container { padding: 20px; position: relative; z-index: 1; }
+    
+    .fila-superior { display: flex; flex-direction: row; gap: 8px; margin-bottom: 12px; width: 100%; }
+    #origen { flex: 1.5; } 
+    #fecha { flex: 1; }   
+    #origen, #fecha { padding: 10px; font-size: 22px; border: 1px solid rgba(212, 175, 55, 0.3); background: rgba(15, 23, 42, 0.95); color: white; height: 65px; border-radius: 16px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; }
+    #fecha::-webkit-calendar-picker-indicator { filter: invert(1); font-size: 18px; margin: 0; }
+
+    #form input, #form select, #form textarea, #form button { font-size: 22px !important; padding: 15px; border-radius: 16px; }
+    #form textarea { height: 100px; }
+    #form button { height: 70px; }
+
+    /* POPUPS TOTALMENTE CENTRADOS */
+    .popup-overlay { 
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+        background: rgba(0,0,0,0.9); 
+        display: flex; align-items: center; justify-content: center; 
+        z-index: 5000; backdrop-filter: blur(5px);
+    }
+    .popup-content { 
+        background: #1e293b; padding: 25px; border-radius: 24px; 
+        text-align: center; width: 85%; max-width: 320px; 
+        border: 2px solid var(--primary); 
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+    .popup-content h3 { color: var(--primary); margin-top: 0; font-size: 20px; margin-bottom: 20px; }
+    .popup-content input { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 1px solid #334155; background: #0b0f1a; color: white; font-size: 18px; text-align: center; box-sizing: border-box; }
+    .popup-content button { width: 100%; padding: 15px; border: none; border-radius: 12px; background: var(--gold-gradient); color: black; font-weight: bold; font-size: 18px; cursor: pointer; margin-bottom: 10px; }
+
+    .card { background: var(--card-bg); padding: 16px; margin: 12px 0; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); position: relative; border-left: 5px solid var(--primary); backdrop-filter: blur(8px); }
+    .card b { font-size: 14px; color: #fff; display: block; }
+    .card .meta { font-size: 11px; color: var(--primary); font-weight: bold; margin-bottom: 4px; }
+    .card .monto { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 16px; font-weight: 800; }
+    .desc-text { font-size: 12px; color: #94a3b8; margin-top: 5px; font-style: italic; }
+    
+    .filtros-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: var(--card-bg); padding: 15px; border-radius: 20px; border: 1px solid rgba(212, 175, 55, 0.3); margin-bottom: 20px; }
+    .footer-controles { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(15px); padding: 15px 20px 35px 20px; box-sizing: border-box; border-top: 2px solid var(--primary); z-index: 1100; border-radius: 24px 24px 0 0; }
+    .plus { background: var(--gold-gradient); width: 60px; height: 60px; border-radius: 50%; font-size: 32px; color: #000; display: flex; align-items: center; justify-content: center; border: none; font-weight: bold; margin: 0 auto 15px auto; }
+    #balance { font-size: 16px; font-weight: 800; padding: 12px 18px; background: #000; border-radius: 14px; border: 1px solid var(--primary); min-width: 100px; text-align: center; }
+    .btn-small { padding: 10px; flex: 1; font-size: 10px; background: #222; color: var(--primary); border-radius: 8px; border: 1px solid var(--primary); font-weight: bold; }
+    input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; font-size: 13px; border-radius: 12px; border: 1px solid #334155; background: rgba(15, 23, 42, 0.9); color: white; box-sizing: border-box; outline: none; }
+    .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="background-icon">O&J</div>
+
+<div id="movimientos">
+    <div class="topbar">MIS GASTOS • GOLD V3.18</div>
+    <div class="container">
+        <div class="filtros-wrapper">
+            <div class="filtro-item"><span style="font-size:9px;color:var(--primary)">AÑO</span><select id="filtroAño" onchange="mostrar()"></select></div>
+            <div class="filtro-item"><span style="font-size:9px;color:var(--primary)">MES</span><select id="filtroMes" onchange="mostrar()"></select></div>
+            <div class="filtro-item"><span style="font-size:9px;color:var(--primary)">CAT</span><select id="filtroCat" onchange="mostrar()"></select></div>
+            <div class="filtro-item"><span style="font-size:9px;color:var(--primary)">SUBCAT</span><select id="filtroSub" onchange="mostrar()"></select></div>
+        </div>
+        <div id="lista"></div>
+        <div style="height:250px"></div>
+    </div>
+
+    <div class="footer-controles">
+        <div style="display:flex; gap:10px; margin-bottom: 15px;">
+            <button class="btn-small" onclick="exportarCSV()">📊 EXPORTAR</button>
+            <input type="file" id="importFile" accept=".csv,.xlsx,.json">
+            <button class="btn-small" onclick="document.getElementById('inputFile').click()">📥 IMPORTAR</button>
+            <input type="file" id="inputFile" class="hidden" accept=".csv" onchange="importarCSV(event)">
+        </div>
+        <div style="display:flex; justify-content: space-between; align-items: center;">
+            <span style="font-size:11px; color:var(--primary); font-weight:bold;">ESTADO CUENTA</span>
+            <button class="plus" onclick="abrirFormulario()">+</button>
+            <div id="balance">0.00 €</div>
+        </div>
+    </div>
+</div>
+
+<div id="form" class="hidden">
+    <div class="topbar" id="tituloForm">NUEVO REGISTRO</div>
+    <div class="container">
+        <div class="fila-superior">
+            <select id="origen"></select>
+            <input type="date" id="fecha" onclick="this.showPicker()">
+        </div>
+        <input type="hidden" id="editId">
+        <div style="display:flex; gap:10px">
+            <select id="categoria" onchange="manejarNuevoValor(this, 'categoria')"></select>
+            <button onclick="borrarElemento('categoria')" style="background:var(--danger); width:70px; border-radius:12px; border:none; color:white; cursor:pointer">🗑</button>
+        </div>
+        <div style="display:flex; gap:10px">
+            <select id="subcategoria" onchange="manejarNuevoValor(this, 'subcategoria')"></select>
+            <button onclick="borrarElemento('subcategoria')" style="background:var(--danger); width:70px; border-radius:12px; border:none; color:white; cursor:pointer">🗑</button>
+        </div>
+        <input id="importe" type="number" step="0.01" inputmode="decimal" placeholder="0.00 €">
+        <textarea id="descripcion" maxlength="200" placeholder="Nota..."></textarea>
+        <button onclick="guardar()" style="background:var(--gold-gradient); color:#000; height:70px; width:100%; font-size:22px; margin-top:10px; border:none; font-weight:bold; border-radius:16px; cursor:pointer">GUARDAR</button>
+        <div id="btnEliminarRegistro" class="hidden">
+            <button onclick="eliminarRegistroActual()" style="background:var(--danger); color:white; height:60px; width:100%; font-size:18px; margin-top:10px; border:none; font-weight:bold; border-radius:16px; cursor:pointer">ELIMINAR MOVIMIENTO</button>
+        </div>
+        <button onclick="volver()" style="background:transparent; color:#94a3b8; width:100%; margin-top:15px; border:none; cursor:pointer; font-size: 16px;">CANCELAR</button>
+    </div>
+</div>
+
+<script>
+    document
+.getElementById("importFile")
+.addEventListener("change", async e => {
+
+const file = e.target.files[0];
+
+if(!file) return;
+
+const total = await ultraImport(file);
+
+alert("Importados " + total + " registros");
+
+});
+let movimientos = JSON.parse(localStorage.getItem('movimientos')) || [];
+let categoriaExtra = JSON.parse(localStorage.getItem('categoriaExtra')) || [];
+let subcategoriaExtra = JSON.parse(localStorage.getItem('subcategoriaExtra')) || [];
+
+const mesesLabel = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const origenBase = ["Ingreso","Gasto","Nómina"];
+const categoriaBase = ["Casa","Caravana","Coche","Compras","Efectivo","Escolar","Garaje","Restaurante","Vacaciones"];
+const subcategoriaBase = ["Agua","Ayuntamiento","Comida","Electrónica","Gasolina","Luz","Mantenimiento","Seguros","Teléfono"];
+
+function llenar(id, base, extra, preseleccionar = "") {
+    let s = document.getElementById(id);
+    s.innerHTML = `<option value="" disabled ${preseleccionar === "" ? 'selected' : ''}>Seleccionar ${id}...</option>`;
+    let unidos = [...new Set([...base, ...extra])].sort((a,b) => a.localeCompare(b));
+    unidos.forEach(v => { 
+        if (id === "categoria" && (v === "Oskar" || v === "Josune")) return;
+        if (id === "subcategoria" && mesesLabel.includes(v)) return;
+        s.innerHTML += `<option value="${v}" ${v === preseleccionar ? 'selected' : ''}>${v}</option>`; 
+    });
+    if (id !== "origen") { s.innerHTML += `<option value="+">+ Añadir nuevo...</option>`; }
+}
+
+function manejarNuevoValor(el, tipo) {
+    if (el.value === "+") { crearPopupNuevo(tipo); el.selectedIndex = 0; }
+}
+
+function crearPopupNuevo(tipo) {
+    let p = document.createElement("div"); p.className = "popup-overlay"; p.id = "popupNuevo";
+    p.innerHTML = `<div class="popup-content"><h3>Nueva ${tipo}</h3><input type="text" id="nuevoNombre" placeholder="Escribe aquí..." autofocus><button onclick="confirmarNuevoElemento('${tipo}')">AÑADIR</button><button onclick="document.getElementById('popupNuevo').remove()" style="background:transparent; color:#94a3b8; border:1px solid #334155; margin-top:5px">CANCELAR</button></div>`;
+    document.body.appendChild(p);
+}
+
+function confirmarNuevoElemento(tipo) {
+    let n = document.getElementById("nuevoNombre").value.trim();
+    if (n) {
+        if (tipo === "categoria") { categoriaExtra.push(n); localStorage.setItem('categoriaExtra', JSON.stringify(categoriaExtra)); }
+        else if (tipo === "subcategoria") { subcategoriaExtra.push(n); localStorage.setItem('subcategoriaExtra', JSON.stringify(subcategoriaExtra)); }
+        llenar(tipo, (tipo === "categoria" ? categoriaBase : subcategoriaBase), (tipo === "categoria" ? categoriaExtra : subcategoriaExtra), n);
+        document.getElementById("popupNuevo").remove();
+        actualizarFiltrosListas();
+    }
+}
+
+document.getElementById("origen").onchange = function() {
+    if(this.value === "Nómina") {
+        let f = document.getElementById("fecha").value;
+        let m = new Date(f + "T00:00:00").getMonth();
+        document.getElementById("subcategoria").innerHTML = `<option value="${mesesLabel[m]}" selected>${mesesLabel[m]}</option>`;
+        crearPopupNomina();
+    }
+};
+
+function crearPopupNomina(){
+    let p = document.createElement("div"); p.className = "popup-overlay"; p.id = "popupNomina"; 
+    p.innerHTML = `<div class="popup-content"><h3>Titular Nómina</h3><button onclick="seleccionarPersona('Oskar')">OSKAR</button><button onclick="seleccionarPersona('Josune')" style="margin-top:15px;background:#e91e63; color:white">JOSUNE</button></div>`;
+    document.body.appendChild(p);
+}
+
+function seleccionarPersona(p){
+    document.getElementById("popupNomina").remove();
+    if(!categoriaExtra.includes(p)) { categoriaExtra.push(p); localStorage.setItem('categoriaExtra', JSON.stringify(categoriaExtra)); }
+    llenar("categoria", categoriaBase, categoriaExtra); 
+    document.getElementById("categoria").innerHTML += `<option value="${p}" selected>${p}</option>`;
+}
+
+function abrirFormulario(idMov = null){ 
+    const form = document.getElementById("form"), movs = document.getElementById("movimientos"), tit = document.getElementById("tituloForm"), btnDel = document.getElementById("btnEliminarRegistro");
+    if(idMov) {
+        let m = movimientos.find(x => x.id === idMov);
+        tit.innerText = "EDITAR REGISTRO";
+        document.getElementById("editId").value = m.id;
+        document.getElementById("fecha").value = m.f;
+        llenar("origen", origenBase, [], m.o);
+        if (m.c === "Oskar" || m.c === "Josune") {
+            llenar("categoria", categoriaBase, categoriaExtra);
+            document.getElementById("categoria").innerHTML += `<option value="${m.c}" selected>${m.c}</option>`;
+        } else {
+            llenar("categoria", categoriaBase, categoriaExtra, m.c);
+        }
+        llenar("subcategoria", subcategoriaBase, subcategoriaExtra, m.s);
+        document.getElementById("importe").value = Math.abs(m.imp);
+        document.getElementById("descripcion").value = m.d || "";
+        btnDel.classList.remove("hidden");
+    } else {
+        tit.innerText = "NUEVO REGISTRO";
+        document.getElementById("editId").value = "";
+        document.getElementById("importe").value = "";
+        document.getElementById("descripcion").value = "";
+        document.getElementById("fecha").value = new Date().toISOString().split("T")[0];
+        llenar("origen", origenBase, []);
+        llenar("categoria", categoriaBase, categoriaExtra);
+        llenar("subcategoria", subcategoriaBase, subcategoriaExtra);
+        btnDel.classList.add("hidden");
+    }
+    form.classList.remove("hidden"); movs.classList.add("hidden");
+}
+
+function volver(){ document.getElementById("form").classList.add("hidden"); document.getElementById("movimientos").classList.remove("hidden"); actualizarFiltrosListas(); mostrar(); }
+
+function guardar(){
+    const id = document.getElementById("editId").value, o = document.getElementById("origen").value, c = document.getElementById("categoria").value, s = document.getElementById("subcategoria").value, f = document.getElementById("fecha").value, d = document.getElementById("descripcion").value, imp = parseFloat(document.getElementById("importe").value);
+    if(!o || !c || isNaN(imp)) return alert("Datos incompletos");
+    const nuevoMov = {id: id ? parseInt(id) : Date.now(), f, o, c, s, imp: (o === "Gasto" ? -Math.abs(imp) : Math.abs(imp)), d};
+    if(id) { let index = movimientos.findIndex(x => x.id === parseInt(id)); movimientos[index] = nuevoMov; }
+    else { movimientos.push(nuevoMov); }
+    localStorage.setItem('movimientos', JSON.stringify(movimientos));
+    volver();
+}
+
+function eliminarRegistroActual() {
+    if(confirm("¿Borrar este registro?")) {
+        movimientos = movimientos.filter(m => m.id !== parseInt(document.getElementById("editId").value));
+        localStorage.setItem('movimientos', JSON.stringify(movimientos));
+        volver();
+    }
+}
+
+function mostrar(){
+    let lista = document.getElementById("lista"), balDiv = document.getElementById("balance"), t = 0;
+    lista.innerHTML = "";
+    const mesF = document.getElementById("filtroMes").value, añoF = document.getElementById("filtroAño").value, catF = document.getElementById("filtroCat").value, subF = document.getElementById("filtroSub").value;
+    const filtrados = movimientos.filter(m => {
+        const dObj = new Date(m.f + "T00:00:00");
+        return (añoF === "TODOS" || dObj.getFullYear() === parseInt(añoF)) && (mesF === "TODOS" || dObj.getMonth() === parseInt(mesF)) && (catF === "TODAS" || m.c === catF) && (subF === "TODAS" || m.s === subF);
+    }).sort((a,b) => new Date(b.f) - new Date(a.f) || b.id - a.id);
+
+    filtrados.forEach(m => {
+        let fV = m.f.split("-").reverse().join("/");
+        lista.innerHTML += `<div class='card' onclick="abrirFormulario(${m.id})" style="border-left-color: ${m.imp >= 0 ? 'var(--success)' : 'var(--danger)'}"><div class="meta">${fV} • ${m.o}</div><b>${m.c} - ${m.s}</b>${m.d ? `<div class="desc-text">${m.d}</div>` : ''}<div class="monto" style="color: ${m.imp >= 0 ? 'var(--success)' : 'var(--danger)'}">${m.imp.toFixed(2)} €</div></div>`;
+        t += m.imp;
+    });
+    balDiv.innerText = t.toFixed(2) + " €";
+    balDiv.style.color = t < 0 ? "var(--danger)" : (t < 500 ? "var(--warning)" : (t <= 1000 ? "var(--success)" : "var(--electric-blue)"));
+}
+
+function initFiltros() {
+    const fM = document.getElementById("filtroMes"), fA = document.getElementById("filtroAño"), hoy = new Date();
+    fM.innerHTML = '<option value="TODOS">Mes: TODOS</option>';
+    mesesLabel.forEach((m, i) => fM.add(new Option(m, i)));
+    fM.value = hoy.getMonth();
+    fA.innerHTML = '<option value="TODOS">Año: TODOS</option>';
+    for(let a=2024; a<=2030; a++) fA.add(new Option(a, a));
+    fA.value = hoy.getFullYear();
+    actualizarFiltrosListas();
+}
+
+function actualizarFiltrosListas() {
+    const fC = document.getElementById("filtroCat"), fS = document.getElementById("filtroSub");
+    fC.innerHTML = '<option value="TODAS">Cat: TODAS</option>';
+    [...new Set([...categoriaBase, ...categoriaExtra])].sort().forEach(c => fC.add(new Option(c, c)));
+    fS.innerHTML = '<option value="TODAS">Sub: TODAS</option>';
+    [...new Set([...subcategoriaBase, ...subcategoriaExtra])].sort().forEach(s => fS.add(new Option(s, s)));
+}
+
+function borrarElemento(id) {
+    let v = document.getElementById(id).value;
+    if(!v || v === "+") return;
+    if(confirm(`¿Eliminar "${v}" de la lista?`)) {
+        if(id === 'categoria') categoriaExtra = categoriaExtra.filter(i => i !== v);
+        else subcategoriaExtra = subcategoriaExtra.filter(i => i !== v);
+        localStorage.setItem(id+'Extra', JSON.stringify(id==='categoria'?categoriaExtra:subcategoriaExtra));
+        location.reload();
+    }
+}
+
+function exportarCSV() {
+    let csv = "\uFEFFFecha;Origen;Categoria;Subcategoria;Importe;Descripcion\n";
+    movimientos.forEach(m => csv += `${m.f.split("-").reverse().join("/")};${m.o};${m.c};${m.s};${m.imp.toString().replace('.',',')};"${m.d || ''}"\n`);
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    link.download = `Gastos_O&J_${new Date().toLocaleDateString()}.csv`;
+    link.click();
+}
+
+function importarCSV(e) {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+        const lineas = evt.target.result.split("\n");
+        let nuevos = [];
+        for (let i = 1; i < lineas.length; i++) {
+            let col = lineas[i].split(";");
+            if (col.length >= 5) {
+                let fP = col[0].trim().split("/");
+                if(fP.length === 3) {
+                    let fISO = `${fP[2]}-${fP[1].padStart(2,'0')}-${fP[0].padStart(2,'0')}`;
+                    nuevos.push({ id: Date.now() + i, f: fISO, o: col[1].trim(), c: col[2].trim(), s: col[3].trim(), imp: parseFloat(col[4].replace(',','.')), d: col[5] ? col[5].replace(/"/g,'').trim() : "" });
+                }
+            }
+        }
+        if(confirm(`¿Importar ${nuevos.length} registros?`)) { movimientos = [...movimientos, ...nuevos]; localStorage.setItem('movimientos', JSON.stringify(movimientos)); location.reload(); }
+    };
+    reader.readAsText(file, "UTF-8");
+}
+
+initFiltros(); 
+mostrar();
+</script>
+
+</body>
+</html>
+
+
+
