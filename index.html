@@ -1,13 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#d4af37">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>MIS GASTOS V3.18 - MASTER GOLD</title>
 
-<!-- Configuración para App Móvil (PWA) -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Gastos O&J">
@@ -35,7 +32,6 @@
     #form textarea { height: 100px; }
     #form button { height: 70px; }
 
-    /* POPUPS TOTALMENTE CENTRADOS */
     .popup-overlay { 
         position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
         background: rgba(0,0,0,0.9); 
@@ -56,7 +52,6 @@
     .card b { font-size: 14px; color: #fff; display: block; }
     .card .meta { font-size: 11px; color: var(--primary); font-weight: bold; margin-bottom: 4px; }
     .card .monto { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 16px; font-weight: 800; }
-    .desc-text { font-size: 12px; color: #94a3b8; margin-top: 5px; font-style: italic; }
     
     .filtros-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: var(--card-bg); padding: 15px; border-radius: 20px; border: 1px solid rgba(212, 175, 55, 0.3); margin-bottom: 20px; }
     .footer-controles { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(15px); padding: 15px 20px 35px 20px; box-sizing: border-box; border-top: 2px solid var(--primary); z-index: 1100; border-radius: 24px 24px 0 0; }
@@ -87,7 +82,6 @@
     <div class="footer-controles">
         <div style="display:flex; gap:10px; margin-bottom: 15px;">
             <button class="btn-small" onclick="exportarCSV()">📊 EXPORTAR</button>
-            <input type="file" id="importFile" accept=".csv,.xlsx,.json">
             <button class="btn-small" onclick="document.getElementById('inputFile').click()">📥 IMPORTAR</button>
             <input type="file" id="inputFile" class="hidden" accept=".csv" onchange="importarCSV(event)">
         </div>
@@ -108,11 +102,11 @@
         </div>
         <input type="hidden" id="editId">
         <div style="display:flex; gap:10px">
-            <select id="categoria" onchange="manejarNuevoValor(this, 'categoria')"></select>
+            <select id="categoria"></select>
             <button onclick="borrarElemento('categoria')" style="background:var(--danger); width:70px; border-radius:12px; border:none; color:white; cursor:pointer">🗑</button>
         </div>
         <div style="display:flex; gap:10px">
-            <select id="subcategoria" onchange="manejarNuevoValor(this, 'subcategoria')"></select>
+            <select id="subcategoria"></select>
             <button onclick="borrarElemento('subcategoria')" style="background:var(--danger); width:70px; border-radius:12px; border:none; color:white; cursor:pointer">🗑</button>
         </div>
         <input id="importe" type="number" step="0.01" inputmode="decimal" placeholder="0.00 €">
@@ -126,32 +120,21 @@
 </div>
 
 <script>
-    document
-.getElementById("importFile")
-.addEventListener("change", async e => {
-
-const file = e.target.files[0];
-
-if(!file) return;
-
-const total = await ultraImport(file);
-
-alert("Importados " + total + " registros");
-
-});
-let movimientos = JSON.parse(localStorage.getItem('movimientos')) || [];
-let categoriaExtra = JSON.parse(localStorage.getItem('categoriaExtra')) || [];
-let subcategoriaExtra = JSON.parse(localStorage.getItem('subcategoriaExtra')) || [];
-
+// --- DATOS MAESTROS INVARIABLES ---
+const subBase = ["Accesorios","Agua","Aita","Ajuar / Electrodomésticos","Alojamiento","Apuestas y juegos","Atracciones","Ayuntamiento","Barco","Cajero","Casa","Comida","Comisiones","Comunidad","Copas","Efectivo","Electrónica","Extraescolar","Farmacia","Filamento","Garaje","Gas","Gasolina","Herramientas","Ikastola","Impresora","Impuestos","Juguetes / Regalos","Libros / Material escolar","Luz","Mantenimiento","Medicamentos","Parking","Peaje","Préstamo","Reforma","Ropa","Seguro","Suscripción","Suscripciones","Teléfono","Tren","Varios"];
+const catBase = ["Casa","Caravana","Coche","Compras","Efectivo","Escolar","Garaje","Restaurante","Vacaciones"];
 const mesesLabel = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const origenBase = ["Ingreso","Gasto","Nómina"];
-const categoriaBase = ["Casa","Caravana","Coche","Compras","Efectivo","Escolar","Garaje","Restaurante","Vacaciones"];
-const subcategoriaBase = ["Agua","Ayuntamiento","Comida","Electrónica","Gasolina","Luz","Mantenimiento","Seguros","Teléfono"];
+
+// CARGA DE DATOS
+let movimientos = JSON.parse(localStorage.getItem('movimientos')) || [];
+let catExtra = JSON.parse(localStorage.getItem('categoriaExtra')) || [];
+let subMaestra = JSON.parse(localStorage.getItem('subMaestra_v2')) || subBase;
 
 function llenar(id, base, extra, preseleccionar = "") {
     let s = document.getElementById(id);
     s.innerHTML = `<option value="" disabled ${preseleccionar === "" ? 'selected' : ''}>Seleccionar ${id}...</option>`;
-    let unidos = [...new Set([...base, ...extra])].sort((a,b) => a.localeCompare(b));
+    let unidos = [...new Set([...base, ...extra])].sort((a,b) => a.localeCompare(b, 'es', {sensitivity: 'base'}));
     unidos.forEach(v => { 
         if (id === "categoria" && (v === "Oskar" || v === "Josune")) return;
         if (id === "subcategoria" && mesesLabel.includes(v)) return;
@@ -173,11 +156,11 @@ function crearPopupNuevo(tipo) {
 function confirmarNuevoElemento(tipo) {
     let n = document.getElementById("nuevoNombre").value.trim();
     if (n) {
-        if (tipo === "categoria") { categoriaExtra.push(n); localStorage.setItem('categoriaExtra', JSON.stringify(categoriaExtra)); }
-        else if (tipo === "subcategoria") { subcategoriaExtra.push(n); localStorage.setItem('subcategoriaExtra', JSON.stringify(subcategoriaExtra)); }
-        llenar(tipo, (tipo === "categoria" ? categoriaBase : subcategoriaBase), (tipo === "categoria" ? categoriaExtra : subcategoriaExtra), n);
-        document.getElementById("popupNuevo").remove();
+        if (tipo === "categoria") { catExtra.push(n); localStorage.setItem('categoriaExtra', JSON.stringify(catExtra)); }
+        else if (tipo === "subcategoria") { subMaestra.push(n); localStorage.setItem('subMaestra_v2', JSON.stringify(subMaestra)); }
+        llenar(tipo, (tipo === "categoria" ? catBase : subMaestra), [], n);
         actualizarFiltrosListas();
+        document.getElementById("popupNuevo").remove();
     }
 }
 
@@ -189,6 +172,8 @@ document.getElementById("origen").onchange = function() {
         crearPopupNomina();
     }
 };
+document.getElementById("categoria").onchange = function() { manejarNuevoValor(this, "categoria"); };
+document.getElementById("subcategoria").onchange = function() { manejarNuevoValor(this, "subcategoria"); };
 
 function crearPopupNomina(){
     let p = document.createElement("div"); p.className = "popup-overlay"; p.id = "popupNomina"; 
@@ -198,8 +183,8 @@ function crearPopupNomina(){
 
 function seleccionarPersona(p){
     document.getElementById("popupNomina").remove();
-    if(!categoriaExtra.includes(p)) { categoriaExtra.push(p); localStorage.setItem('categoriaExtra', JSON.stringify(categoriaExtra)); }
-    llenar("categoria", categoriaBase, categoriaExtra); 
+    if(!catExtra.includes(p)) { catExtra.push(p); localStorage.setItem('categoriaExtra', JSON.stringify(catExtra)); }
+    llenar("categoria", catBase, catExtra); 
     document.getElementById("categoria").innerHTML += `<option value="${p}" selected>${p}</option>`;
 }
 
@@ -212,12 +197,16 @@ function abrirFormulario(idMov = null){
         document.getElementById("fecha").value = m.f;
         llenar("origen", origenBase, [], m.o);
         if (m.c === "Oskar" || m.c === "Josune") {
-            llenar("categoria", categoriaBase, categoriaExtra);
+            llenar("categoria", catBase, catExtra);
             document.getElementById("categoria").innerHTML += `<option value="${m.c}" selected>${m.c}</option>`;
         } else {
-            llenar("categoria", categoriaBase, categoriaExtra, m.c);
+            llenar("categoria", catBase, catExtra, m.c);
         }
-        llenar("subcategoria", subcategoriaBase, subcategoriaExtra, m.s);
+        if (m.o === "Nómina") {
+            document.getElementById("subcategoria").innerHTML = `<option value="${m.s}" selected>${m.s}</option>`;
+        } else {
+            llenar("subcategoria", subMaestra, [], m.s);
+        }
         document.getElementById("importe").value = Math.abs(m.imp);
         document.getElementById("descripcion").value = m.d || "";
         btnDel.classList.remove("hidden");
@@ -228,8 +217,8 @@ function abrirFormulario(idMov = null){
         document.getElementById("descripcion").value = "";
         document.getElementById("fecha").value = new Date().toISOString().split("T")[0];
         llenar("origen", origenBase, []);
-        llenar("categoria", categoriaBase, categoriaExtra);
-        llenar("subcategoria", subcategoriaBase, subcategoriaExtra);
+        llenar("categoria", catBase, catExtra);
+        llenar("subcategoria", subMaestra, []);
         btnDel.classList.add("hidden");
     }
     form.classList.remove("hidden"); movs.classList.add("hidden");
@@ -287,18 +276,22 @@ function initFiltros() {
 function actualizarFiltrosListas() {
     const fC = document.getElementById("filtroCat"), fS = document.getElementById("filtroSub");
     fC.innerHTML = '<option value="TODAS">Cat: TODAS</option>';
-    [...new Set([...categoriaBase, ...categoriaExtra])].sort().forEach(c => fC.add(new Option(c, c)));
+    [...new Set([...catBase, ...catExtra])].sort().forEach(c => {
+        if (c !== "Oskar" && c !== "Josune") fC.add(new Option(c, c));
+    });
     fS.innerHTML = '<option value="TODAS">Sub: TODAS</option>';
-    [...new Set([...subcategoriaBase, ...subcategoriaExtra])].sort().forEach(s => fS.add(new Option(s, s)));
+    [...new Set(subMaestra)].sort().forEach(s => {
+        if (!mesesLabel.includes(s)) fS.add(new Option(s, s));
+    });
 }
 
 function borrarElemento(id) {
     let v = document.getElementById(id).value;
     if(!v || v === "+") return;
     if(confirm(`¿Eliminar "${v}" de la lista?`)) {
-        if(id === 'categoria') categoriaExtra = categoriaExtra.filter(i => i !== v);
-        else subcategoriaExtra = subcategoriaExtra.filter(i => i !== v);
-        localStorage.setItem(id+'Extra', JSON.stringify(id==='categoria'?categoriaExtra:subcategoriaExtra));
+        if(id === 'categoria') catExtra = catExtra.filter(i => i !== v);
+        else subMaestra = subMaestra.filter(i => i !== v);
+        localStorage.setItem(id === 'categoria' ? 'categoriaExtra' : 'subMaestra_v2', JSON.stringify(id === 'categoria' ? catExtra : subMaestra));
         location.reload();
     }
 }
@@ -333,12 +326,7 @@ function importarCSV(e) {
     reader.readAsText(file, "UTF-8");
 }
 
-initFiltros(); 
-mostrar();
+initFiltros(); mostrar();
 </script>
-
 </body>
 </html>
-
-
-
