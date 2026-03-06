@@ -4,53 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>MIS GASTOS V3.18 - MASTER GOLD</title>
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Gastos O&J">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230b0f1a'/><circle cx='50' cy='50' r='40' fill='none' stroke='%23d4af37' stroke-width='4'/><text x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-weight='bold' font-size='35' fill='%23d4af37'>O%26J</text></svg>">
-
     <style>
-        :root {
-            --primary: #d4af37; --success: #22c55e; --danger: #ef4444; --warning: #f97316;
-            --electric-blue: #00f2ff; --bg: #0b0f1a; --card-bg: rgba(30, 41, 59, 0.7);
-            --text: #f8fafc; --gold-gradient: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
-        }
+        :root { --primary: #d4af37; --success: #22c55e; --danger: #ef4444; --warning: #f97316; --electric-blue: #00f2ff; --bg: #0b0f1a; --card-bg: rgba(30, 41, 59, 0.7); --text: #f8fafc; --gold-gradient: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); }
         body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
         .background-icon { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 30vw; font-weight: 900; background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; opacity: 0.1; z-index: -1; pointer-events: none; }
         .topbar { background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(10px); padding: 20px; font-size: 15px; font-weight: 700; text-align: center; border-bottom: 1px solid var(--primary); color: var(--primary); position: sticky; top: 0; z-index: 1000; }
         .container { padding: 20px; position: relative; z-index: 1; }
-        
         .fila-superior { display: flex; flex-direction: row; gap: 8px; margin-bottom: 12px; width: 100%; }
         #origen, #fecha { padding: 10px; font-size: 22px; border: 1px solid rgba(212, 175, 55, 0.3); background: rgba(15, 23, 42, 0.95); color: white; height: 65px; border-radius: 16px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; }
         #origen { flex: 1.5; } #fecha { flex: 1; }
-        #fecha::-webkit-calendar-picker-indicator { filter: invert(1); font-size: 18px; margin: 0; }
-
         .card { background: var(--card-bg); padding: 16px; margin: 12px 0; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); position: relative; border-left: 5px solid var(--primary); backdrop-filter: blur(8px); }
         .card b { font-size: 14px; color: #fff; display: block; }
         .card .meta { font-size: 11px; color: var(--primary); font-weight: bold; margin-bottom: 4px; }
         .card .monto { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 16px; font-weight: 800; }
-        
         .filtros-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: var(--card-bg); padding: 15px; border-radius: 20px; border: 1px solid rgba(212, 175, 55, 0.3); margin-bottom: 20px; }
-        
         .footer-controles { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(15px); padding: 15px 20px 35px 20px; box-sizing: border-box; border-top: 2px solid var(--primary); z-index: 1100; border-radius: 24px 24px 0 0; }
         .footer-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; width: 100%; }
         .plus { background: var(--gold-gradient); width: 65px; height: 65px; border-radius: 50%; font-size: 35px; color: #000; display: flex; align-items: center; justify-content: center; border: none; font-weight: bold; cursor: pointer; box-shadow: 0 0 20px rgba(212, 175, 55, 0.4); }
         #balance { font-size: 24px; font-weight: 900; padding: 10px 15px; background: #000; border-radius: 14px; border: 1px solid var(--primary); text-align: center; justify-self: end; min-width: 110px; }
-        
         .btn-small { padding: 10px; flex: 1; font-size: 10px; background: #222; color: var(--primary); border-radius: 8px; border: 1px solid var(--primary); font-weight: bold; }
         input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; font-size: 13px; border-radius: 12px; border: 1px solid #334155; background: rgba(15, 23, 42, 0.9); color: white; box-sizing: border-box; outline: none; }
         .hidden { display: none; }
-
-        .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 5000; backdrop-filter: blur(5px); }
-        .popup-content { background: #1e293b; padding: 25px; border-radius: 24px; text-align: center; width: 85%; max-width: 320px; border: 2px solid var(--primary); }
     </style>
 </head>
 <body>
-
 <div class="background-icon">O&J</div>
-
 <div id="movimientos">
     <div class="topbar">MIS GASTOS • GOLD V3.18</div>
     <div class="container">
@@ -63,21 +45,16 @@
         <div id="lista"></div>
         <div style="height:250px"></div>
     </div>
-
     <div class="footer-controles">
-        <div style="display:flex; gap:10px; margin-bottom: 20px;">
+        <div style="display:flex; gap:8px; margin-bottom: 20px;">
             <button class="btn-small" onclick="exportarCSV()">📊 EXPORTAR</button>
             <button class="btn-small" onclick="document.getElementById('inputFile').click()">📥 IMPORTAR</button>
+            <button class="btn-small" onclick="resetTotal()" style="background:#450a0a; color:var(--danger); border-color:var(--danger); flex:0.4;">⚠️ RESET</button>
             <input type="file" id="inputFile" class="hidden" onchange="importarCSV(event)">
         </div>
-        <div class="footer-row">
-            <div></div>
-            <button class="plus" onclick="abrirFormulario()">+</button>
-            <div id="balance">0.00 €</div>
-        </div>
+        <div class="footer-row"><div></div><button class="plus" onclick="abrirFormulario()">+</button><div id="balance">0.00 €</div></div>
     </div>
 </div>
-
 <div id="form" class="hidden">
     <div class="topbar" id="tituloForm">NUEVO REGISTRO</div>
     <div class="container">
@@ -92,74 +69,37 @@
         <button onclick="volver()" style="background:transparent; color:#94a3b8; width:100%; margin-top:15px; border:none; font-size: 16px;">CANCELAR</button>
     </div>
 </div>
-
 <script>
 const subBase = ["Accesorios","Agua","Aita","Ajuar / Electrodomésticos","Alojamiento","Apuestas y juegos","Atracciones","Ayuntamiento","Barco","Cajero","Casa","Comida","Comisiones","Comunidad","Copas","Efectivo","Electrónica","Extraescolar","Farmacia","Filamento","Garaje","Gas","Gasolina","Herramientas","Ikastola","Impresora","Impuestos","Juguetes / Regalos","Libros / Material escolar","Luz","Mantenimiento","Medicamentos","Parking","Peaje","Préstamo","Reforma","Ropa","Septiembre","Seguro","Suscripción","Suscripciones","Teléfono","Tren","Varios"];
 const catBase = ["Casa","Caravana","Coche","Compras","Efectivo","Escolar","Garaje","Restaurante","Vacaciones"];
 const mesesLabel = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const origenBase = ["Ingreso","Gasto","Nómina"];
-
 let movimientos = JSON.parse(localStorage.getItem('movimientos')) || [];
 let catExtra = JSON.parse(localStorage.getItem('categoriaExtra')) || [];
 let subMaestra = JSON.parse(localStorage.getItem('subMaestra_v2')) || subBase;
 
+function resetTotal() {
+    if(confirm("¿BORRAR TODO? Se perderán todos los datos.")) {
+        if(confirm("¿Seguro? No hay marcha atrás.")) { localStorage.clear(); location.reload(); }
+    }
+}
+
 function llenar(id, base, extra, preseleccionar = "") {
-    let s = document.getElementById(id);
-    s.innerHTML = `<option value="" disabled ${preseleccionar === "" ? 'selected' : ''}>Seleccionar ${id}...</option>`;
+    let s = document.getElementById(id); s.innerHTML = `<option value="" disabled ${preseleccionar === "" ? 'selected' : ''}>Seleccionar ${id}...</option>`;
     let unidos = [...new Set([...base, ...extra])].sort((a,b) => a.localeCompare(b, 'es', {sensitivity: 'base'}));
     unidos.forEach(v => { 
         if (id === "categoria" && (v === "Oskar" || v === "Josune")) return;
         if (id === "subcategoria" && mesesLabel.includes(v)) return;
         s.innerHTML += `<option value="${v}" ${v === preseleccionar ? 'selected' : ''}>${v}</option>`; 
     });
-    if (id !== "origen") { s.innerHTML += `<option value="+">+ Añadir nuevo...</option>`; }
-}
-
-function manejarNuevoValor(el, tipo) { if (el.value === "+") { crearPopupNuevo(tipo); el.selectedIndex = 0; } }
-
-function crearPopupNuevo(tipo) {
-    let p = document.createElement("div"); p.className = "popup-overlay"; p.id = "popupNuevo";
-    p.innerHTML = `<div class="popup-content"><h3>Nueva ${tipo}</h3><input type="text" id="nuevoNombre" placeholder="Nombre..." autofocus><button onclick="confirmarNuevoElemento('${tipo}')" style="width:100%;padding:15px;background:var(--gold-gradient);border:none;border-radius:12px;font-weight:bold;margin-bottom:10px">AÑADIR</button><button onclick="document.getElementById('popupNuevo').remove()" style="background:transparent;color:#94a3b8;border:1px solid #334155;width:100%;padding:10px;border-radius:12px">CANCELAR</button></div>`;
-    document.body.appendChild(p);
-}
-
-function confirmarNuevoElemento(tipo) {
-    let n = document.getElementById("nuevoNombre").value.trim();
-    if (n) {
-        if (tipo === "categoria") { catExtra.push(n); localStorage.setItem('categoriaExtra', JSON.stringify(catExtra)); }
-        else { subMaestra.push(n); localStorage.setItem('subMaestra_v2', JSON.stringify(subMaestra)); }
-        llenar(tipo, (tipo === "categoria" ? catBase : subMaestra), [], n);
-        actualizarFiltrosListas(); document.getElementById("popupNuevo").remove();
-    }
-}
-
-document.getElementById("origen").onchange = function() {
-    if(this.value === "Nómina") {
-        let f = document.getElementById("fecha").value, m = new Date(f + "T00:00:00").getMonth();
-        document.getElementById("subcategoria").innerHTML = `<option value="${mesesLabel[m]}" selected>${mesesLabel[m]}</option>`;
-        crearPopupNomina();
-    }
-};
-document.getElementById("categoria").onchange = function() { manejarNuevoValor(this, "categoria"); };
-document.getElementById("subcategoria").onchange = function() { manejarNuevoValor(this, "subcategoria"); };
-
-function crearPopupNomina(){
-    let p = document.createElement("div"); p.className = "popup-overlay"; p.id = "popupNomina"; 
-    p.innerHTML = `<div class="popup-content"><h3>Titular Nómina</h3><button onclick="seleccionarPersona('Oskar')" style="width:100%;padding:15px;background:var(--gold-gradient);border:none;border-radius:12px;font-weight:bold;margin-bottom:10px">OSKAR</button><button onclick="seleccionarPersona('Josune')" style="width:100%;padding:15px;background:#e91e63;color:white;border:none;border-radius:12px;font-weight:bold;">JOSUNE</button></div>`;
-    document.body.appendChild(p);
-}
-
-function seleccionarPersona(p){
-    document.getElementById("popupNomina").remove();
-    if(!catExtra.includes(p)) { catExtra.push(p); localStorage.setItem('categoriaExtra', JSON.stringify(catExtra)); }
-    llenar("categoria", catBase, catExtra); 
-    document.getElementById("categoria").innerHTML += `<option value="${p}" selected>${p}</option>`;
+    if (id !== "origen") s.innerHTML += `<option value="+">+ Añadir nuevo...</option>`;
 }
 
 function abrirFormulario(idMov = null){ 
     const form = document.getElementById("form"), movs = document.getElementById("movimientos"), btnDel = document.getElementById("btnEliminarRegistro");
     if(idMov) {
-        let m = movimientos.find(x => x.id === idMov);
+        let m = movimientos.find(x => x.id.toString() === idMov.toString());
+        if(!m) return;
         document.getElementById("editId").value = m.id; document.getElementById("fecha").value = m.f;
         llenar("origen", origenBase, [], m.o);
         if (m.c === "Oskar" || m.c === "Josune") { llenar("categoria", catBase, catExtra); document.getElementById("categoria").innerHTML += `<option value="${m.c}" selected>${m.c}</option>`; }
@@ -170,25 +110,27 @@ function abrirFormulario(idMov = null){
         btnDel.classList.remove("hidden");
     } else {
         document.getElementById("editId").value = ""; document.getElementById("importe").value = ""; document.getElementById("descripcion").value = "";
-        document.getElementById("fecha").value = new Date().toISOString().split("T");
+        document.getElementById("fecha").value = new Date().toISOString().split("T")[0];
         llenar("origen", origenBase, []); llenar("categoria", catBase, catExtra); llenar("subcategoria", subMaestra, []);
         btnDel.classList.add("hidden");
     }
     form.classList.remove("hidden"); movs.classList.add("hidden");
 }
 
-function volver(){ document.getElementById("form").classList.add("hidden"); document.getElementById("movimientos").classList.remove("hidden"); actualizarFiltrosListas(); mostrar(); }
-
 function guardar(){
     const id = document.getElementById("editId").value, o = document.getElementById("origen").value, c = document.getElementById("categoria").value, s = document.getElementById("subcategoria").value, f = document.getElementById("fecha").value, d = document.getElementById("descripcion").value, imp = parseFloat(document.getElementById("importe").value);
     if(!o || !c || isNaN(imp)) return alert("Faltan datos");
-    const nuevoMov = {id: id ? parseInt(id) : Date.now(), f, o, c, s, imp: (o === "Gasto" ? -Math.abs(imp) : Math.abs(imp)), d};
-    if(id) { let index = movimientos.findIndex(x => x.id === parseInt(id)); movimientos[index] = nuevoMov; }
+    const nuevoId = id ? id : "user_" + Date.now();
+    const nuevoMov = {id: nuevoId, f, o, c, s, imp: (o === "Gasto" ? -Math.abs(imp) : Math.abs(imp)), d};
+    if(id) { let index = movimientos.findIndex(x => x.id.toString() === id.toString()); movimientos[index] = nuevoMov; }
     else { movimientos.push(nuevoMov); }
     localStorage.setItem('movimientos', JSON.stringify(movimientos)); volver();
 }
 
-function eliminarRegistroActual() { if(confirm("¿Borrar?")) { movimientos = movimientos.filter(m => m.id !== parseInt(document.getElementById("editId").value)); localStorage.setItem('movimientos', JSON.stringify(movimientos)); volver(); } }
+function eliminarRegistroActual() {
+    const id = document.getElementById("editId").value;
+    if(confirm("¿Borrar?")) { movimientos = movimientos.filter(m => m.id.toString() !== id.toString()); localStorage.setItem('movimientos', JSON.stringify(movimientos)); volver(); }
+}
 
 function mostrar(){
     let lista = document.getElementById("lista"), balDiv = document.getElementById("balance"), t = 0; lista.innerHTML = "";
@@ -196,29 +138,62 @@ function mostrar(){
     const filtrados = movimientos.filter(m => {
         const dObj = new Date(m.f + "T00:00:00");
         return (añoF === "TODOS" || dObj.getFullYear() === parseInt(añoF)) && (mesF === "TODOS" || dObj.getMonth() === parseInt(mesF)) && (catF === "TODAS" || m.c === catF) && (subF === "TODAS" || m.s === subF);
-    }).sort((a,b) => new Date(b.f) - new Date(a.f) || b.id - a.id);
+    }).sort((a,b) => new Date(b.f) - new Date(a.f) || b.id.toString().localeCompare(a.id.toString()));
     filtrados.forEach(m => {
         let fV = m.f.split("-").reverse().join("/");
-        lista.innerHTML += `<div class='card' onclick="abrirFormulario(${m.id})" style="border-left-color: ${m.imp >= 0 ? 'var(--success)' : 'var(--danger)'}"><div class="meta">${fV} • ${m.o}</div><b>${m.c} - ${m.s}</b>${m.d ? `<div style="font-size:12px;opacity:0.8">${m.d}</div>` : ''}<div class="monto" style="color: ${m.imp >= 0 ? 'var(--success)' : 'var(--danger)'}">${m.imp.toFixed(2)} €</div></div>`;
+        lista.innerHTML += `<div class='card' onclick="abrirFormulario('${m.id}')" style="border-left-color: ${m.imp >= 0 ? 'var(--success)' : 'var(--danger)'}"><div class="meta">${fV} • ${m.o}</div><b>${m.c} - ${m.s}</b>${m.d ? `<div style="font-size:12px;opacity:0.8">${m.d}</div>` : ''}<div class="monto" style="color: ${m.imp >= 0 ? 'var(--success)' : 'var(--danger)'}">${m.imp.toFixed(2)} €</div></div>`;
         t += m.imp;
     });
     balDiv.innerText = t.toFixed(2) + " €";
     balDiv.style.color = t < 0 ? "var(--danger)" : (t < 500 ? "var(--warning)" : (t <= 1000 ? "var(--success)" : "var(--electric-blue)"));
 }
 
+function importarCSV(e) {
+    const file = e.target.files; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+        const lineas = evt.target.result.split(/\r?\n/).filter(l => l.trim() !== "");
+        if (lineas.length < 2) return alert("Archivo sin datos");
+        const norm = (t) => t ? t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
+        const cab = lineas[0].split(";").map(h => norm(h));
+        const iF = cab.indexOf("fecha"), iO = cab.indexOf("origen"), iC = cab.indexOf("categoria"), iS = cab.indexOf("subcategoria"), iI = cab.indexOf("importe"), iD = cab.indexOf("descripcion");
+        if (iF === -1 || iI === -1) return alert("Faltan columnas básicas");
+        let nuevos = [];
+        for (let i = 1; i < lineas.length; i++) {
+            let col = lineas[i].split(";");
+            if (col[iF]) {
+                let fP = col[iF].trim().split("/");
+                if (fP.length === 3) {
+                    let d = fP[0].padStart(2,'0'), m = fP[1].padStart(2,'0'), a = fP[2].trim();
+                    if(a.length === 2) a = "20" + a;
+                    let fISO = `${a}-${m}-${d}`;
+                    let txtImp = col[iI].replace(/[^\d,.-]/g, '').replace(',', '.').trim();
+                    let imp = parseFloat(txtImp);
+                    if (!isNaN(imp)) {
+                        let oriRaw = norm(col[iO]);
+                        let oriFin = oriRaw === "nomina" ? "Nómina" : (oriRaw === "ingreso" ? "Ingreso" : "Gasto");
+                        nuevos.push({ id: "csv_" + Date.now() + "_" + i, f: fISO, o: oriFin, c: col[iC] ? col[iC].trim() : "Varios", s: col[iS] ? col[iS].trim() : "Varios", imp: imp, d: iD !== -1 && col[iD] ? col[iD].replace(/"/g,'').trim() : "" });
+                    }
+                }
+            }
+        }
+        if(nuevos.length > 0 && confirm(`Importar ${nuevos.length} registros?`)) { movimientos = [...movimientos, ...nuevos]; localStorage.setItem('movimientos', JSON.stringify(movimientos)); location.reload(); }
+    };
+    reader.readAsText(file, "UTF-8");
+}
+
+function volver(){ document.getElementById("form").classList.add("hidden"); document.getElementById("movimientos").classList.remove("hidden"); actualizarFiltrosListas(); mostrar(); }
 function initFiltros() {
     const fM = document.getElementById("filtroMes"), fA = document.getElementById("filtroAño"), hoy = new Date();
     fM.innerHTML = '<option value="TODOS">Mes: TODOS</option>'; mesesLabel.forEach((m, i) => fM.add(new Option(m, i))); fM.value = hoy.getMonth();
     fA.innerHTML = '<option value="TODOS">Año: TODOS</option>'; for(let a=2024; a<=2030; a++) fA.add(new Option(a, a)); fA.value = hoy.getFullYear();
     actualizarFiltrosListas();
 }
-
 function actualizarFiltrosListas() {
     const fC = document.getElementById("filtroCat"), fS = document.getElementById("filtroSub");
     fC.innerHTML = '<option value="TODAS">Cat: TODAS</option>'; [...new Set([...catBase, ...catExtra])].sort().forEach(c => { if (c !== "Oskar" && c !== "Josune") fC.add(new Option(c, c)); });
     fS.innerHTML = '<option value="TODAS">Sub: TODAS</option>'; [...new Set(subMaestra)].sort().forEach(s => { if (!mesesLabel.includes(s)) fS.add(new Option(s, s)); });
 }
-
 function borrarElemento(id) {
     let v = document.getElementById(id).value; if(!v || v === "+") return;
     if(confirm(`¿Eliminar "${v}"?`)) {
@@ -226,66 +201,35 @@ function borrarElemento(id) {
         localStorage.setItem(id === 'categoria' ? 'categoriaExtra' : 'subMaestra_v2', JSON.stringify(id === 'categoria' ? catExtra : subMaestra)); location.reload();
     }
 }
-
 function exportarCSV() {
     let csv = "\uFEFFFecha;Origen;Categoria;Subcategoria;Importe;Descripcion\n";
     movimientos.forEach(m => csv += `${m.f.split("-").reverse().join("/")};${m.o};${m.c};${m.s};${m.imp.toString().replace('.',',')};"${m.d || ''}"\n`);
     const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })); link.download = `Gastos_O&J_${new Date().toLocaleDateString()}.csv`; link.click();
 }
-
-// --- IMPORTACIÓN CORREGIDA ---
-function importarCSV(e) {
-    const file = e.target.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-        const lineas = evt.target.result.split(/\r?\n/).filter(l => l.trim() !== "");
-        if (lineas.length < 2) return alert("Archivo sin datos");
-
-        const normalizar = (t) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-        const encabezados = lineas[0].split(";").map(h => normalizar(h));
-        
-        const iF = encabezados.indexOf("fecha"), iO = encabezados.indexOf("origen"), 
-              iC = encabezados.indexOf("categoria"), iS = encabezados.indexOf("subcategoria"), 
-              iI = encabezados.indexOf("importe"), iD = encabezados.indexOf("descripcion");
-
-        if (iF === -1 || iI === -1) return alert("Error: No se encuentran las columnas 'Fecha' o 'Importe'");
-
-        let nuevos = [];
-        for (let i = 1; i < lineas.length; i++) {
-            let col = lineas[i].split(";");
-            if (col.length >= 2 && col[iF]) {
-                let fP = col[iF].trim().split("/");
-                if (fP.length === 3) {
-                    let d = fP[0].padStart(2,'0'), m = fP[1].padStart(2,'0'), a = fP[2].trim();
-                    if(a.length === 2) a = "20" + a;
-                    let fISO = `${a}-${m}-${d}`;
-                    
-                    let txtImp = col[iI].replace(/[^\d,.-]/g, '').replace(',', '.').trim();
-                    let imp = parseFloat(txtImp);
-
-                    if (!isNaN(imp)) {
-                        nuevos.push({
-                            id: Date.now() + i + Math.random(), f: fISO,
-                            o: iO !== -1 && col[iO] ? col[iO].trim() : "Gasto",
-                            c: iC !== -1 && col[iC] ? col[iC].trim() : "Varios",
-                            s: iS !== -1 && col[iS] ? col[iS].trim() : "Varios",
-                            imp: imp,
-                            d: iD !== -1 && col[iD] ? col[iD].replace(/"/g,'').trim() : ""
-                        });
-                    }
-                }
-            }
-        }
-        if (nuevos.length === 0) alert("No se ha podido procesar ningún registro válido.");
-        else if(confirm(`Detectados ${nuevos.length} registros. ¿Importar?`)) {
-            movimientos = [...movimientos, ...nuevos];
-            localStorage.setItem('movimientos', JSON.stringify(movimientos));
-            location.reload();
-        }
-    };
-    reader.readAsText(file, "UTF-8");
+function manejarNuevoValor(el, tipo) { if (el.value === "+") { crearPopupNuevo(tipo); el.selectedIndex = 0; } }
+function crearPopupNuevo(tipo) {
+    let p = document.createElement("div"); p.className = "popup-overlay"; p.id = "popupNuevo";
+    p.innerHTML = `<div class="popup-content"><h3>Nueva ${tipo}</h3><input type="text" id="nuevoNombre" placeholder="Nombre..." autofocus><button onclick="confirmarNuevoElemento('${tipo}')" style="width:100%;padding:15px;background:var(--gold-gradient);border:none;border-radius:12px;font-weight:bold;margin-bottom:10px">AÑADIR</button><button onclick="document.getElementById('popupNuevo').remove()" style="background:transparent;color:#94a3b8;border:1px solid #334155;width:100%;padding:10px;border-radius:12px">CANCELAR</button></div>`;
+    document.body.appendChild(p);
 }
-
+function confirmarNuevoElemento(tipo) {
+    let n = document.getElementById("nuevoNombre").value.trim();
+    if (n) {
+        if (tipo === "categoria") { catExtra.push(n); localStorage.setItem('categoriaExtra', JSON.stringify(catExtra)); }
+        else { subMaestra.push(n); localStorage.setItem('subMaestra_v2', JSON.stringify(subMaestra)); }
+        llenar(tipo, (tipo === "categoria" ? catBase : subMaestra), [], n);
+        actualizarFiltrosListas(); document.getElementById("popupNuevo").remove();
+    }
+}
+document.getElementById("origen").onchange = function() {
+    if(this.value === "Nómina") {
+        let f = document.getElementById("fecha").value, m = new Date(f + "T00:00:00").getMonth();
+        document.getElementById("subcategoria").innerHTML = `<option value="${mesesLabel[m]}" selected>${mesesLabel[m]}</option>`;
+        crearPopupNomina();
+    }
+};
+document.getElementById("categoria").onchange = function() { manejarNuevoValor(this, "categoria"); };
+document.getElementById("subcategoria").onchange = function() { manejarNuevoValor(this, "subcategoria"); };
 initFiltros(); mostrar();
 </script>
 </body>
