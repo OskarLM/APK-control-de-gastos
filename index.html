@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>MIS GASTOS V0.7 - GOLD FINAL</title>
+    <title>MIS GASTOS V0.9</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230b0f1a'/><circle cx='50' cy='50' r='40' fill='none' stroke='%23d4af37' stroke-width='4'/><text x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-weight='bold' font-size='35' fill='%23d4af37'>O%26J</text></svg>">
@@ -114,7 +114,22 @@
             <button class="btn-small" onclick="resetTotal()" style="background:#450a0a; color:var(--danger); border-color:var(--danger); flex:0.4;">⚠️ RESET</button>
             <input type="file" id="inputFile" class="hidden" onchange="importarCSV(event)">
         </div>
-        <div class="footer-row"><div></div><button class="plus" onclick="abrirFormulario()">+</button><div id="balance">0.00 €</div></div>
+        
+
+<div class="footer-row">
+    <button class="plus" onclick="abrirGraficos()" style="width: 55px; height: 55px; background: var(--gold-metal); font-size: 20px;">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="black" stroke-width="3"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+    </button>
+    <button class="plus" onclick="abrirFormulario()">+</button>
+    <div id="balance">0.00 €</div>
+</div>
+
+
+
+
+
+
+
     </div>
 </div>
 <div id="form" class="hidden">
@@ -185,9 +200,13 @@ const guardar = () => {
     localStorage.setItem('movimientos', JSON.stringify(movimientos)); volver();
 };
 
-const mostrar = () => {
+// SUSTITUYE TU FUNCIÓN mostrar() POR ESTA
+	const mostrar = () => {
+    const movimientosDiv = document.getElementById("movimientos");
     const fs = ["filtroMes","filtroAño","filtroCat","filtroSub","filtroOri"].map(id => document.getElementById(id).value);
     let t = 0;
+
+    // RECALCULO DE FILTRADOS (Igual que siempre)
     filtradosGlobal = movimientos.filter(m => {
         const d = m.f.split("-");
         const cM = fs[0] === "TODOS" || (parseInt(d[1])-1).toString() === fs[0];
@@ -197,23 +216,27 @@ const mostrar = () => {
         const cO = fs[4] === "TODOS" || m.o === fs[4];
         return cM && cA && cC && cS && cO;
     }).sort((a,b) => new Date(b.f) - new Date(a.f));
+    
     filtradosGlobal.forEach(m => t += m.imp);
-    document.getElementById("lista").innerHTML = filtradosGlobal.slice(0, registrosVisibles).map(m => `
-        <div class='card' onclick="abrirFormulario('${m.id}')" style="border-left-color: ${m.imp >= 0 ? 'var(--success)' : 'var(--danger)'}">
-            <div class="meta">${m.f.split("-").reverse().join("/")} • ${m.o}</div><b>${m.c} - ${m.s}</b>${m.d ? `<div style="font-size:12px;opacity:0.8">${m.d}</div>` : ''}
-            <div class="monto" style="color: ${m.imp >= 0 ? 'var(--success)' : 'var(--danger)'}">${m.imp.toFixed(2)} €</div>
-        </div>`).join("");
-    document.getElementById("loader").style.display = "none";
-    const bD = document.getElementById("balance"); bD.innerText = t.toFixed(2) + " €";
+
+    // ACTUALIZACIÓN DEL BALANCE (Siempre visible)
+    const bD = document.getElementById("balance");
+    bD.innerText = t.toFixed(2) + " €";
     bD.style.color = t < 0 ? "var(--danger)" : (t <= 750 ? "var(--warning)" : (t <= 1400 ? "var(--success)" : "var(--electric-blue)"));
+
+    // DECISIÓN: ¿Pintamos Lista o pintamos Gráficos?
+    if (movimientosDiv.dataset.modo === "graficos") {
+        renderizarBarrasGraficos(); // Nueva función dedicada
+    } else {
+        document.getElementById("lista").innerHTML = filtradosGlobal.slice(0, registrosVisibles).map(m => `
+            <div class='card' onclick="abrirFormulario('${m.id}')" style="border-left-color: ${m.imp >= 0 ? 'var(--success)' : 'var(--danger)'}">
+                <div class="meta">${m.f.split("-").reverse().join("/")} • ${m.o}</div><b>${m.c} - ${m.s}</b>${m.d ? `<div style="font-size:12px;opacity:0.8">${m.d}</div>` : ''}
+                <div class="monto" style="color: ${m.imp >= 0 ? 'var(--success)' : 'var(--danger)'}">${m.imp.toFixed(2)} €</div>
+            </div>`).join("");
+        document.getElementById("loader").style.display = "none";
+    }
 };
-const manejarNuevo = (el, t) => { if (el.value === "+") { 
-    let n = prompt(`Nueva ${t}:`); if(n) {
-        let s = sanificar(n); t === "categoria" ? catExtra.push(s) : subMaestra.push(s);
-        localStorage.setItem(t === "categoria" ? 'categoriaExtra' : 'subMaestra_v2', JSON.stringify(t === "categoria" ? catExtra : subMaestra));
-        llenar(t, (t === "categoria" ? catBase : subMaestra), (t === "categoria" ? catExtra : []), s); actualizarListas();
-    } el.selectedIndex = 0;
-}};
+
 
 const importarCSV = (e) => {
     const reader = new FileReader(); reader.onload = (evt) => {
@@ -290,7 +313,95 @@ const init = () => {
     fA.innerHTML = '<option value="TODOS">Año: TODOS</option>'; for(let a=2020; a<=2030; a++) fA.add(new Option(a, a)); fA.value = hoy.getFullYear();
     actualizarListas(); document.getElementById("tagBackup").innerText = "PRÓX: #" + nBackup; mostrar();
 };
-window.onscroll = () => { if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200 && registrosVisibles < filtradosGlobal.length) { document.getElementById("loader").style.display = "block"; setTimeout(() => { registrosVisibles += 25; mostrar(); }, 200); }};
+// SUSTITUYE TU window.onscroll POR ESTA
+window.onscroll = () => {
+    // Si estamos en modo gráficos, desactivamos el auto-scroll de la lista
+    if (document.getElementById("movimientos").dataset.modo === "graficos") return;
+
+    if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200 && registrosVisibles < filtradosGlobal.length) {
+        document.getElementById("loader").style.display = "block";
+        setTimeout(() => { registrosVisibles += 25; mostrar(); }, 200);
+    }
+};
+
+
+
+// --- CIERRE DE LÓGICA V0.8 ---
+// Esta función SOLO cambia el modo (Lista <-> Gráficos)
+const abrirGraficos = (event) => {
+    const movimientosDiv = document.getElementById("movimientos");
+    const btnGraficos = document.querySelector(".footer-row button:first-child");
+
+    if (movimientosDiv.dataset.modo === "graficos") {
+        movimientosDiv.dataset.modo = "lista";
+        btnGraficos.innerHTML = `<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="black" stroke-width="3"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>`;
+    } else {
+        movimientosDiv.dataset.modo = "graficos";
+        btnGraficos.innerHTML = "✖";
+    }
+    mostrar(); // Llamamos a mostrar para que decida qué pintar
+};
+
+
+
+
+
+
+
+
+// Esta función SOLO pinta las barras con los datos ya filtrados
+const renderizarBarrasGraficos = () => {
+    const listaOriginal = document.getElementById("lista");
+    
+    // 1. Agrupamos los gastos por categoría
+    const totales = filtradosGlobal.filter(m => m.imp < 0).reduce((acc, m) => {
+        acc[m.c] = (acc[m.c] || 0) + Math.abs(m.imp);
+        return acc;
+    }, {});
+
+    // 2. Buscamos el gasto máximo para escalar el ancho de las barras
+    const valores = Object.values(totales);
+    const gastoMaximo = valores.length > 0 ? Math.max(...valores) : 1;
+
+    let htmlLeyenda = `
+        <h2 style="color:var(--primary); font-size:14px; text-align:center; margin-bottom:10px;">ANÁLISIS DE GASTO (ORDENADO)</h2>
+        <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-bottom:25px; padding:0 10px;">
+            <span style="font-size:9px; color:var(--electric-blue); border:1px solid var(--electric-blue); padding:2px 6px; border-radius:10px;">0-50€</span>
+            <span style="font-size:9px; color:var(--success); border:1px solid var(--success); padding:2px 6px; border-radius:10px;">50-200€</span>
+            <span style="font-size:9px; color:var(--warning); border:1px solid var(--warning); padding:2px 6px; border-radius:10px;">200-500€</span>
+            <span style="font-size:9px; color:var(--danger); border:1px solid var(--danger); padding:2px 6px; border-radius:10px;">+500€</span>
+        </div>`;
+
+    // 3. Convertimos a array y ORDENAMOS de mayor a menor (b - a)
+    listaOriginal.innerHTML = htmlLeyenda + Object.entries(totales)
+        .sort((a, b) => b[1] - a[1]) // <--- AQUÍ ESTÁ EL CAMBIO: b[1] es el importe acumulado
+        .map(([cat, val]) => {
+            const anchoRelativo = (val / gastoMaximo) * 100;
+            const t1 = Math.min(val, 50), 
+                  t2 = val > 50 ? Math.min(val - 50, 150) : 0, 
+                  t3 = val > 200 ? Math.min(val - 200, 300) : 0, 
+                  t4 = val > 500 ? val - 500 : 0;
+            
+            const p1 = (t1/val)*100, p2 = (t2/val)*100, p3 = (t3/val)*100, p4 = (t4/val)*100;
+
+            return `<div class="card" style="border-left:none; background:transparent; margin-bottom:15px; padding: 10px 0;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px">
+                    <span style="color:var(--primary); font-weight:bold; font-size:12px;">${cat}</span>
+                    <b style="color:#fff; font-size:12px;">${val.toFixed(2)} €</b>
+                </div>
+                <div style="width:${anchoRelativo}%; height:12px; background:#000; border-radius:6px; overflow:hidden; display:flex; border:1px solid rgba(212,175,55,0.2); transition: width 0.5s ease;">
+                    <div style="width:${p1}%; height:100%; background:var(--electric-blue);"></div>
+                    <div style="width:${p2}%; height:100%; background:var(--success);"></div>
+                    <div style="width:${p3}%; height:100%; background:var(--warning);"></div>
+                    <div style="width:${p4}%; height:100%; background:var(--danger);"></div>
+                </div>
+            </div>`;
+        }).join("") || "<p style='text-align:center;padding:20px;opacity:0.5;'>No hay datos para este mes</p>";
+};
+
+
+
+init(); // Llamada final
 </script>
 </body>
 </html>
