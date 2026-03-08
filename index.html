@@ -209,25 +209,62 @@ const mostrar = () => {
 const renderizarBarrasGraficos = () => {
     const l = document.getElementById("lista");
     const fCat = document.getElementById("filtroCat").value;
+    const fMes = document.getElementById("filtroMes").value;
     const esSub = fCat !== "TODAS";
+    
+    const factor = fMes === "TODOS" ? 12 : 1;
+    const tituloExtra = fMes === "TODOS" ? " (ANUAL x12)" : "";
+
     const totales = filtradosGlobal.filter(m => m.imp < 0).reduce((acc, m) => {
         const clave = esSub ? m.s : m.c;
-        acc[clave] = (acc[clave] || 0) + Math.abs(m.imp);
+        acc[clave] = (acc[clave] || 0) + (Math.abs(m.imp) * factor);
         return acc;
     }, {});
+
     const maxVal = Math.max(...Object.values(totales), 1);
-    l.innerHTML = `<h2 style="color:var(--primary); font-size:14px; text-align:center;">${esSub ? 'SUB-GASTOS: '+fCat : 'GASTOS POR CATEGORÍA'}</h2>` + 
+
+    const leyenda = `
+        <div style="display:flex; justify-content:center; gap:10px; margin-bottom:15px; font-size:13px; flex-wrap:wrap; font-weight:bold;">
+            <span style="color:var(--electric-blue)">● <${50 * factor}€</span>
+            <span style="color:var(--success)">● <${200 * factor}€</span>
+            <span style="color:var(--warning)">● <${500 * factor}€</span>
+            <span style="color:var(--danger)">● >${500 * factor}€</span>
+        </div>`;
+
+    l.innerHTML = `<h2 style="color:var(--primary); font-size:14px; text-align:center; margin-bottom:5px;">${esSub ? 'SUB-GASTOS: '+fCat : 'GASTOS POR CATEGORÍA'}${tituloExtra}</h2>` + 
+        leyenda +
         Object.entries(totales).sort((a,b) => b[1] - a[1]).map(([n, v]) => {
             const w = (v / maxVal) * 100;
-            const p1 = Math.min(v, 50)/v*100, p2 = (v>50?Math.min(v-50,150):0)/v*100, p3 = (v>200?Math.min(v-200,300):0)/v*100, p4 = (v>500?v-500:0)/v*100;
+            let contenidoBarra = "";
+
+            // EXCEPCIÓN: Compra casa siempre en verde
+            if (n.toLowerCase() === "compra casa") {
+                contenidoBarra = `<div style="width:100%; background:var(--success);"></div>`;
+            } else {
+                const u1 = 50 * factor, u2 = 150 * factor, u3 = 300 * factor;
+                const p1 = Math.min(v, u1)/v*100;
+                const p2 = (v > u1 ? Math.min(v - u1, u2) : 0)/v*100;
+                const p3 = (v > (u1 + u2) ? Math.min(v - (u1 + u2), u3) : 0)/v*100;
+                const p4 = (v > (u1 + u2 + u3) ? v - (u1 + u2 + u3) : 0)/v*100;
+                
+                contenidoBarra = `
+                    <div style="width:${p1}%; background:var(--electric-blue);"></div>
+                    <div style="width:${p2}%; background:var(--success);"></div>
+                    <div style="width:${p3}%; background:var(--warning);"></div>
+                    <div style="width:${p4}%; background:var(--danger);"></div>`;
+            }
+
             return `<div class="card" style="border-left:none; background:transparent;">
                 <div style="display:flex; justify-content:space-between; font-size:12px;"><span>${n}</span><b>${v.toFixed(2)} €</b></div>
                 <div style="width:${w}%; height:12px; background:#000; border-radius:6px; display:flex; overflow:hidden; border:1px solid rgba(212,175,55,0.2); margin-top:5px; position:relative;">
-                    <div style="width:${p1}%; background:var(--electric-blue);"></div><div style="width:${p2}%; background:var(--success);"></div><div style="width:${p3}%; background:var(--warning);"></div><div style="width:${p4}%; background:var(--danger);"></div>
+                    ${contenidoBarra}
                 </div>
             </div>`;
         }).join("");
 };
+
+
+
 
 
 /////////////////////////
