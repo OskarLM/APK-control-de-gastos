@@ -1,10 +1,26 @@
 {
-  "short_name": "Gastos O&J",
-  "name": "MIS GASTOS - MASTER GOLD",
-  "icons":,
-  "start_url": "index.html",
+  "name": "Nombre Completo de tu Aplicación",
+  "short_name": "MiApp",
+  "description": "Una breve descripción de lo que hace tu app",
+  "start_url": "/NOMBRE_DE_TU_REPOSITORIO/", 
   "display": "standalone",
-  "theme_color": "#0b0f1a",
-  "background_color": "#0b0f1a",
-  "orientation": "portrait"
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icono-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icono-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
+
+
