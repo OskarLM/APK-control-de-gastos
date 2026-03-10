@@ -246,7 +246,216 @@ const init = () => {
 
 const ejecutarBackupRotativo = () => { /* Tu lógica de backup original */ };
 const exportarCSV = () => { /* Tu lógica de exportación original */ };
-const importarCSV = (e) => { /* Tu lógica de importación original */ };
+<script>
+/**
+ * Importa un CSV con cabeceras:
+ * Fecha  Origen  Categoria  Subcategoria  Importe  Descripcion
+ * - Soporta separador TAB, ; o , (detecta automáticamente).
+ * - Soporta coma decimal europea.
+ * - Fechas dd/mm/yyyy -> yyyy-mm-dd
+ * - Inserta en 'movimientos' y actualiza listas/filtros.
+ */
+const importarCSV = (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const text = reader.result;
+
+      // 1) Normalizar saltos de línea y quitar BOM
+      const raw = text.replace(/^\uFEFF/, '');
+      const lines = raw.split(/\r?\n/).filter(l => l.trim().length > 0);
+
+      if (lines.length === 0) {
+        alert("El archivo está vacío.");
+        return;
+      }
+
+      // 2) Detectar delimitador (preferencia: TAB > ; > ,)
+      const header = lines[0];
+      const counts = {
+        tab: (header.match(/\t/g) || []).length,
+        semi: (header.match(/;/g) || []).length,
+        comma: (header.match(/,/g) || []).length
+      };
+      let delim = '\t';
+      if (counts.tab >= counts.semi && counts.tab >= counts.comma) delim = '\t';
+      else if (counts.semi >= counts.comma) delim = ';';
+      else delim = ','; // ojo: si usas coma decimal, mejor usa TAB o ;
+
+      // 3) Parseo básico con comillas (manteniendo separador)
+      //    No usamos librerías externas; esto cubre casos comunes.
+      const parseLine = (line) => {
+        const out = [];
+        let cur = '';
+        let inQ = false;
+        for (let i = 0; i < line.length; i++) {
+          const ch = line[i];
+          if (ch === '"') {
+            // Dobles comillas dentro de campo: "" -> " (se resuelve al final)
+            if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+            else inQ = !inQ;
+          } else if (ch === delim && !inQ) {
+            out.push(cur);
+            cur = '';
+          } else {
+            cur += ch;
+          }
+        }
+        out.push(cur);
+        return out;
+      };
+
+      // 4) Mapear cabeceras (flexible con mayúsculas/acentos)
+      const cols = parseLine(header).map(h => h.trim().toLowerCase());
+      const idx = {
+        fecha: cols.findIndex(c => c.startsWith('fecha')),
+        origen: cols.findIndex(c => c.startsWith('origen')),
+        categoria: cols.findIndex(c => c.startsWith('categoria')),
+        subcategoria: cols.findIndex(c => c.startsWith('subcategoria')),
+        importe: cols.findIndex(c => c.startsWith('importe')),
+        descripcion: cols.findIndex(c => c.startsWith('descripcion') || c.startsWith('descripción'))
+      };
+      const required = ['fecha','origen','categoria','subcategoria','importe'];
+      const missing = required.filter(k => idx[k] < 0);
+      if (missing.length) {
+        alert("Faltan columnas obligatorias en el CSV: " + missing.join(', '));
+        return;
+      }
+
+      // 5) Utilidades de normalización
+      const toISODate = (ddmmyyyy) => {
+        // 06/03/2026 -> 2026-03-06 | también aceptar 6/3/2026
+        const m = ddmmyyyy.trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+        if (!m) return ddmmyyyy; // si ya viene en ISO, lo dejamos
+        const d = m[1].padStart(2,'0');
+        const mo = m[2].padStart(2,'0');
+        const y = m[3];
+        return `${y}-${mo}-${d}`;
+      };
+      const parseEuroNumber = (s) => {
+        // Quita espacios, miles y cambia coma por punto (acepta - y +)
+        let t = (s || '').toString().trim();
+        // Si viene entrecomillado con comillas raras, limpiar “”“”
+        t = t.replace(/“|”|„|‟|‶|‷/g, '"');
+        // Quitar puntos de miles: 1.234,56 -> 1234,56
+        t = t.replace(/\.(?=\d{3}(?:\D|$))/g, '');
+        // Cambiar coma decimal a punto: -100,12 -> -100.12
+        t = t.replace(/,/, '.');
+        const n = parseFloat(t);
+        return isNaN(n) ? 0 : n;
+      };
+      const cleanText = (s) => {
+        if (!s) return "";
+        // Colapsar comillas repetidas: Uzturpe"""""" -> Uzturpe" (o sin comillas)
+        let t = s.replace(/\"{2,}/g, '"').trim();
+        // Opcional: quita comillas sueltas al inicio/fin
+        if (t.startsWith('"') && t.endsWith('"')) t = t.slice(1,-1);
+        return t.trim();
+      };
+      const normalizeCap = (s) => {
+        if (!s) return s;
+        const x = s.trim();
+        return x.charAt(0).toUpperCase() + x.slice(1);
+      };
+
+      // 6) Recorrer filas
+      const nuevos = [];
+      for (let i = 1; i < lines.length; i++) {
+        const arr = parseLine(lines[i]);
+        if (arr.every(v => (v || '').trim() === '')) continue; // línea vacía
+
+        const rawFecha = arr[idx.fecha] ?? '';
+        const rawOrigen = arr[idx.origen] ?? '';
+        const rawCat = arr[idx.categoria] ?? '';
+        const rawSub = arr[idx.subcategoria] ?? '';
+        const rawImp = arr[idx.importe] ?? '';
+        const rawDesc = (idx.descripcion >= 0 ? arr[idx.descripcion] : '') ?? '';
+
+        const f = toISODate(cleanText(rawFecha));
+        let o = cleanText(rawOrigen);
+        let c = cleanText(rawCat);
+        let s = cleanText(rawSub);
+        let d = cleanText(rawDesc);
+
+        // Normaliza Origen exacto a valores que tu app maneja:
+        // Ingreso | Gasto | Nómina
+        const oLow = o.toLowerCase();
+        if (oLow.startsWith('nom')) o = 'Nómina';
+        else if (oLow.startsWith('gas')) o = 'Gasto';
+        else if (oLow.startsWith('ing')) o = 'Ingreso';
+
+        // Importe (coma decimal -> punto) y signo
+        let imp = parseEuroNumber(rawImp);
+        // Si el CSV ya trae - para Gasto, lo mantenemos; si no, aplicamos regla general:
+        if (o === 'Gasto' && imp > 0) imp = -Math.abs(imp);
+        if (o !== 'Gasto' && imp < 0) imp = Math.abs(imp);
+
+        // Asegurar capitalización consistente
+        c = normalizeCap(c);
+        s = normalizeCap(s);
+
+        // Crear objeto movimiento
+        const mov = {
+          id: `id_${Date.now()}_${i}`, // id estable para evitar colisiones
+          f, o, c, s,
+          imp, // negativo para Gastos
+          d
+        };
+
+        // Validaciones mínimas
+        if (!f || !o || !c || !s || isNaN(imp)) continue;
+        nuevos.push(mov);
+      }
+
+      if (!nuevos.length) {
+        alert("No se encontraron filas válidas para importar.");
+        return;
+      }
+
+      // 7) Insertar categorías/subcategorías si faltan
+      const nuevasCats = [];
+      const nuevasSubs = [];
+      nuevos.forEach(m => {
+        // catBase, catExtra, subMaestra ya existen en tu app
+        if (![...catBase, ...catExtra].includes(m.c)) {
+          if (!nuevasCats.includes(m.c)) nuevasCats.push(m.c);
+          catExtra.push(m.c);
+        }
+        if (!subMaestra.includes(m.s)) {
+          if (!nuevasSubs.includes(m.s)) nuevasSubs.push(m.s);
+          subMaestra.push(m.s);
+        }
+      });
+      if (nuevasCats.length) localStorage.setItem('categoriaExtra', JSON.stringify(catExtra));
+      if (nuevasSubs.length) localStorage.setItem('subMaestra_v2', JSON.stringify(subMaestra));
+
+      // 8) Insertar movimientos en tu array global y persistir
+      movimientos = [...movimientos, ...nuevos].sort((a,b) => new Date(b.f) - new Date(a.f));
+      localStorage.setItem('movimientos', JSON.stringify(movimientos));
+
+      // 9) Refrescar interfaz
+      actualizarListas();
+      resetPagina();
+      mostrar();
+
+      alert(`Importación completa: ${nuevos.length} registros añadidos.`);
+    } catch (err) {
+      console.error(err);
+      alert("Error al importar el CSV. Revisa el formato o contáctame con el archivo.");
+    } finally {
+      // Limpia el file input para permitir reimportar el mismo archivo si se desea
+      e.target.value = "";
+    }
+  };
+  reader.onerror = () => alert("No se pudo leer el archivo.");
+  reader.readAsText(file, 'UTF-8');
+};
+</script>
+
+        
 const resetTotal = () => confirm("¿BORRAR TODO?") && (localStorage.clear(), location.reload());
 
 window.onscroll = () => {
